@@ -73,7 +73,7 @@
 
     function renderLogs() {
         const area = document.getElementById('logsDisplayArea');
-        const search = document.getElementById('logSearchInput').value.toLowerCase().strip();
+        const search = document.getElementById('logSearchInput').value.toLowerCase().trim();
         const channel = document.getElementById('filterLogChannel').value;
 
         const filtered = logsList.filter(log => {

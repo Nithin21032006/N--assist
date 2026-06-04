@@ -188,7 +188,10 @@
 
             // Database indicator
             const dbIndicator = document.getElementById('dbIndicator');
-            if (data.using_mysql) {
+            if (data.using_postgres) {
+                dbIndicator.innerText = "Neon PostgreSQL Online";
+                dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#a855f7"; // Neon purple dot
+            } else if (data.using_mysql) {
                 dbIndicator.innerText = "MySQL Production Online";
                 dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#10b981";
             } else {

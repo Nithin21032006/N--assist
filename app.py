@@ -238,7 +238,8 @@ def api_dashboard_stats():
         'due_today': tasks_due_today,
         'upcoming': upcoming_deadlines,
         'upcoming_list': [t.to_dict() for t in upcoming_list],
-        'using_mysql': app.config.get('USING_MYSQL', False)
+        'using_mysql': app.config.get('USING_MYSQL', False),
+        'using_postgres': app.config.get('USING_POSTGRES', False)
     })
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
@@ -520,8 +521,10 @@ with app.app_context():
     except Exception as e:
         print(f"[Database] Connection/creation error: {e}")
 
-# Start background reminder daemon thread
-start_scheduler_thread(app)
+# Start background reminder daemon thread (only in the main worker process to avoid SQLite locking in debug mode)
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+    start_scheduler_thread(app)
+
 
 if __name__ == '__main__':
     # Run server locally on default port 5000

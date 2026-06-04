@@ -242,7 +242,7 @@
 
     function renderTasks() {
         const area = document.getElementById('tasksDisplayArea');
-        const keyword = document.getElementById('taskSearchInput').value.toLowerCase().strip();
+        const keyword = document.getElementById('taskSearchInput').value.toLowerCase().trim();
         const category = document.getElementById('filterCategory').value;
         const priority = document.getElementById('filterPriority').value;
         const status = document.getElementById('filterStatus').value;

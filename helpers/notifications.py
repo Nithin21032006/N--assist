@@ -64,7 +64,7 @@ def send_email(user, subject, body, app=None):
 
 def send_whatsapp(user, body, app=None):
     """
-    Dispatches a WhatsApp message. If Twilio is configured, sends via API.
+    Dispatches a WhatsApp message. If Meta WhatsApp Cloud API is configured, sends via Graph API.
     Always logs to NotificationLog for simulation viewing.
     """
     recipient_phone = user.phone
@@ -89,33 +89,42 @@ def send_whatsapp(user, body, app=None):
         db.session.add(log)
         db.session.commit()
 
-    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
-    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-    from_number = os.getenv('TWILIO_FROM_NUMBER', 'whatsapp:+14155238886')
+    api_token = os.getenv('WHATSAPP_API_TOKEN')
+    phone_number_id = os.getenv('WHATSAPP_PHONE_NUMBER_ID')
+    api_version = os.getenv('WHATSAPP_API_VERSION', 'v20.0')
 
-    if account_sid and auth_token:
+    if api_token and phone_number_id:
         try:
-            # Twilio WhatsApp numbers require a "whatsapp:" prefix
-            to_number = recipient_phone
-            if not to_number.startswith('whatsapp:'):
-                to_number = f"whatsapp:{to_number}"
-                
-            url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
-            data = {
-                "From": from_number,
-                "To": to_number,
-                "Body": body
+            # Clean recipient phone: strip '+' and spaces, and 'whatsapp:' prefix if present
+            to_number = recipient_phone.replace('whatsapp:', '').replace('+', '').replace(' ', '').replace('-', '')
+            
+            url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
+            headers = {
+                "Authorization": f"Bearer {api_token}",
+                "Content-Type": "application/json"
             }
-            response = requests.post(url, data=data, auth=(account_sid, auth_token))
+            data = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": to_number,
+                "type": "text",
+                "text": {
+                    "preview_url": False,
+                    "body": body
+                }
+            }
+            
+            response = requests.post(url, json=data, headers=headers)
             if response.status_code in [200, 201]:
-                print(f"[Notifications] Actual WhatsApp message successfully sent to {recipient_phone}")
+                print(f"[Notifications] Actual WhatsApp message successfully sent to {to_number}")
                 return True
             else:
-                print(f"[Notifications] Twilio API error sending to {recipient_phone}: {response.text}")
+                print(f"[Notifications] Meta API error sending to {to_number}: {response.text}")
                 return False
         except Exception as e:
-            print(f"[Notifications] Twilio exception: {e}")
+            print(f"[Notifications] Meta WhatsApp exception: {e}")
             return False
     else:
-        print(f"[Notifications] Simulation mode: WhatsApp message to {recipient_phone} saved to logs. (Configure Twilio in .env to activate actual WhatsApp notifications)")
+        print(f"[Notifications] Simulation mode: WhatsApp message to {recipient_phone} saved to logs. (Configure Meta WhatsApp settings in .env to activate actual WhatsApp notifications)")
         return True
+
