@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - N-Assist{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Welcome Header Banner -->
+<div class="welcome-banner glass-panel">
+    <div class="welcome-text">
+        <h2>Hello, <span class="glow-text">{{ session.user_name }}</span>!</h2>
+        <p>Ready to crush your engineering academic deadlines today? Here is your study status.</p>
+    </div>
+    <div class="system-indicator">
+        <span class="db-status-dot active"></span>
+        <span class="db-status-label" id="dbIndicator">Local Storage Enabled</span>
+    </div>
+</div>
+
+<!-- Stats Dashboard Grid -->
+<div class="stats-grid">
+    <div class="stat-card glass-panel border-gradient-purple" onclick="location.href='/tasks'">
+        <div class="stat-header">
+            <div class="stat-icon purple-gradient">
+                <i data-lucide="layers"></i>
+            </div>
+            <span class="stat-value" id="statTotal">-</span>
+        </div>
+        <span class="stat-label">Total Tasks</span>
+    </div>
+
+    <div class="stat-card glass-panel border-gradient-blue" onclick="location.href='/tasks?status=Pending'">
+        <div class="stat-header">
+            <div class="stat-icon blue-gradient">
+                <i data-lucide="clock"></i>
+            </div>
+            <span class="stat-value" id="statPending">-</span>
+        </div>
+        <span class="stat-label">Pending Tasks</span>
+    </div>
+
+    <div class="stat-card glass-panel border-gradient-emerald" onclick="location.href='/tasks?status=Completed'">
+        <div class="stat-header">
+            <div class="stat-icon emerald-gradient">
+                <i data-lucide="check-circle-2"></i>
+            </div>
+            <span class="stat-value" id="statCompleted">-</span>
+        </div>
+        <span class="stat-label">Completed Tasks</span>
+    </div>
+
+    <div class="stat-card glass-panel border-gradient-rose" onclick="location.href='/tasks?status=Overdue'">
+        <div class="stat-header">
+            <div class="stat-icon rose-gradient">
+                <i data-lucide="alert-octagon"></i>
+            </div>
+            <span class="stat-value" id="statOverdue">-</span>
+        </div>
+        <span class="stat-label">Overdue Tasks</span>
+    </div>
+
+    <div class="stat-card glass-panel border-gradient-amber" onclick="location.href='/todo'">
+        <div class="stat-header">
+            <div class="stat-icon amber-gradient">
+                <i data-lucide="calendar-check"></i>
+            </div>
+            <span class="stat-value" id="statDueToday">-</span>
+        </div>
+        <span class="stat-label">Due Today</span>
+    </div>
+
+    <div class="stat-card glass-panel border-gradient-cyan" onclick="location.href='/calendar'">
+        <div class="stat-header">
+            <div class="stat-icon cyan-gradient">
+                <i data-lucide="calendar-range"></i>
+            </div>
+            <span class="stat-value" id="statUpcoming">-</span>
+        </div>
+        <span class="stat-label">Upcoming Deadlines</span>
+    </div>
+</div>
+
+<!-- Main Section Split -->
+<div class="dashboard-split">
+    <!-- Left panel: Task lists & Quick Add -->
+    <div class="split-left">
+        <!-- Quick Add Widget -->
+        <div class="glass-panel quick-add-widget">
+            <div class="panel-header">
+                <h3><i data-lucide="plus-circle" class="purple-icon"></i> Quick Add Task</h3>
+            </div>
+            <form id="quickAddForm" class="quick-add-form">
+                <input type="text" id="quickTitle" placeholder="Task title..." required autocomplete="off">
+                <select id="quickCategory" required>
+                    <option value="" disabled selected>Category...</option>
+                    <option value="Assignment">Assignment</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Exam">Exam</option>
+                    <option value="Project">Project</option>
+                    <option value="Certification">Certification</option>
+                    <option value="Personal">Personal</option>
+                </select>
+                <input type="datetime-local" id="quickDeadline" required>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i data-lucide="plus"></i> Add
+                </button>
+            </form>
+        </div>
+
+        <!-- High Priority / Due Soon Tasks list -->
+        <div class="glass-panel critical-tasks-panel">
+            <div class="panel-header">
+                <h3><i data-lucide="alert-circle" class="rose-icon"></i> Critical Upcoming Deadlines</h3>
+                <a href="{{ url_for('tasks') }}" class="view-all-link">Manage All <i data-lucide="chevron-right"></i></a>
+            </div>
+            <div class="critical-tasks-list" id="criticalTasksList">
+                <!-- Loaded dynamically -->
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right panel: Productivity charts & insights widget -->
+    <div class="split-right">
+        <!-- Completion Rate Progress Widget -->
+        <div class="glass-panel progress-widget">
+            <div class="panel-header">
+                <h3>Productivity Score</h3>
+            </div>
+            <div class="score-circle-container">
+                <div class="score-circle">
+                    <svg class="progress-ring" width="120" height="120">
+                        <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                        <circle class="progress-ring-bar" id="scoreRing" stroke="url(#purpleBlueGradient)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                        <defs>
+                            <linearGradient id="purpleBlueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#a855f7" />
+                                <stop offset="100%" stop-color="#6366f1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="score-text">
+                        <span id="scorePercentage">0%</span>
+                        <small>Completed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="productivity-insights" id="productivityInsights">
+                Loading insights...
+            </div>
+        </div>
+
+        <!-- Weekly Activity Mini Chart -->
+        <div class="glass-panel mini-chart-panel">
+            <div class="panel-header">
+                <h3>Weekly Performance</h3>
+                <a href="{{ url_for('analytics') }}" class="icon-link"><i data-lucide="external-link"></i></a>
+            </div>
+            <div class="chart-canvas-container mini-chart">
+                <canvas id="miniPerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Inject Chart.js CDN for Analytics rendering -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDashboardStats();
+        setupQuickAdd();
+    });
+
+    async function loadDashboardStats() {
+        try {
+            const res = await fetch('/api/dashboard/stats');
+            const data = await res.json();
+            
+            // Set stats values
+            document.getElementById('statTotal').innerText = data.total;
+            document.getElementById('statPending').innerText = data.pending;
+            document.getElementById('statCompleted').innerText = data.completed;
+            document.getElementById('statOverdue').innerText = data.overdue;
+            document.getElementById('statDueToday').innerText = data.due_today;
+            document.getElementById('statUpcoming').innerText = data.upcoming;
+
+            // Database indicator
+            const dbIndicator = document.getElementById('dbIndicator');
+            if (data.using_mysql) {
+                dbIndicator.innerText = "MySQL Production Online";
+                dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#10b981";
+            } else {
+                dbIndicator.innerText = "SQLite Environment Running";
+                dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#3b82f6";
+            }
+
+            // Render upcoming list
+            renderCriticalTasks(data.upcoming_list);
+
+            // Fetch full analytics data for completion score and mini chart
+            loadMiniAnalytics(data.completed, data.total);
+        } catch (err) {
+            console.error("Error loading dashboard stats:", err);
+        }
+    }
+
+    function renderCriticalTasks(tasks) {
+        const container = document.getElementById('criticalTasksList');
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="check-circle" class="success-icon"></i>
+                    <p>No critical deadlines coming up! Keep up the good work.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        container.innerHTML = '';
+        tasks.forEach(task => {
+            const dateObj = new Date(task.deadline);
+            const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+            
+            const badgeClass = task.priority === 'High' ? 'badge-high' : task.priority === 'Medium' ? 'badge-med' : 'badge-low';
+            
+            const item = document.createElement('div');
+            item.className = 'critical-task-item glass-panel';
+            item.innerHTML = `
+                <div class="task-details">
+                    <div class="task-title-line">
+                        <span class="task-title-text">${escapeHTML(task.title)}</span>
+                        <span class="category-tag">${task.category}</span>
+                    </div>
+                    <div class="task-meta-line">
+                        <span class="task-date"><i data-lucide="calendar"></i> ${formattedDate}</span>
+                        <span class="priority-badge ${badgeClass}">${task.priority}</span>
+                    </div>
+                </div>
+                <button class="action-check-btn" onclick="toggleTask(${task.id})" title="Mark Complete">
+                    <i data-lucide="check"></i>
+                </button>
+            `;
+            container.appendChild(item);
+        });
+        lucide.createIcons();
+    }
+
+    async function toggleTask(taskId) {
+        try {
+            const res = await fetch(`/api/tasks/${taskId}/toggle`, { method: 'POST' });
+            if (res.ok) {
+                showToast("Task completed!", "success");
+                loadDashboardStats();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadMiniAnalytics(completed, total) {
+        // Calculate circle percentage
+        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+        document.getElementById('scorePercentage').innerText = percentage + '%';
+        
+        // Update circle ring SVG stroke-dashoffset
+        const circle = document.getElementById('scoreRing');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        
+        const offset = circumference - (percentage / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+
+        // Populate insights text
+        const insights = document.getElementById('productivityInsights');
+        if (total === 0) {
+            insights.innerText = "Add your school tasks or personal milestones to generate productivity metrics.";
+        } else if (percentage >= 80) {
+            insights.innerHTML = "🔥 <strong>Outstanding!</strong> You're managing tasks efficiently. Keep checking off deadlines to maintain this high rate.";
+        } else if (percentage >= 50) {
+            insights.innerHTML = "⚡ <strong>On Track.</strong> You've finished more than half your work. Dedicate time this afternoon to knock out a couple of High items.";
+        } else {
+            insights.innerHTML = "⚠️ <strong>Task Backlog.</strong> Deadlines are accumulating. Use N-Assist AI Study planner to schedule focus sessions.";
+        }
+
+        // Load mini weekly chart
+        try {
+            const res = await fetch('/api/analytics/data');
+            const data = await res.json();
+            renderMiniChart(data.weekly_activity);
+        } catch (err) {
+            console.error("Mini chart render error:", err);
+        }
+    }
+
+    let miniChartObj = null;
+    function renderMiniChart(weeklyActivity) {
+        const ctx = document.getElementById('miniPerformanceChart').getContext('2d');
+        if (miniChartObj) miniChartObj.destroy();
+
+        const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        
+        miniChartObj = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tasks Completed',
+                    data: weeklyActivity,
+                    borderColor: '#a855f7',
+                    borderWidth: 2.5,
+                    backgroundColor: 'rgba(168, 85, 247, 0.08)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#fff',
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: 'rgba(255, 255, 255, 0.4)', font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { stepSize: 1, color: 'rgba(255, 255, 255, 0.4)', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    function setupQuickAdd() {
+        const form = document.getElementById('quickAddForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('quickTitle').value;
+            const category = document.getElementById('quickCategory').value;
+            const deadline = document.getElementById('quickDeadline').value;
+            
+            try {
+                const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, category, deadline })
+                });
+
+                if (res.ok) {
+                    showToast("Task added successfully!", "success");
+                    form.reset();
+                    loadDashboardStats();
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || "Failed to add task", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Connection error", "error");
+            }
+        });
+    }
+</script>
+{% endblock %}

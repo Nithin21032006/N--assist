@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Tasks - N-Assist{% endblock %}
+{% block page_title %}Task Manager{% endblock %}
+
+{% block content %}
+<!-- Filtering & Actions Toolbar -->
+<div class="toolbar glass-panel">
+    <div class="toolbar-search">
+        <i data-lucide="search" class="search-icon"></i>
+        <input type="text" id="taskSearchInput" placeholder="Search tasks by keyword..." autocomplete="off">
+    </div>
+    
+    <div class="toolbar-filters">
+        <select id="filterCategory">
+            <option value="">All Categories</option>
+            <option value="Assignment">Assignment</option>
+            <option value="Hackathon">Hackathon</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Exam">Exam</option>
+            <option value="Project">Project</option>
+            <option value="Certification">Certification</option>
+            <option value="Personal">Personal</option>
+        </select>
+        
+        <select id="filterPriority">
+            <option value="">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+        
+        <select id="filterStatus">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+            <option value="Overdue">Overdue</option>
+        </select>
+    </div>
+
+    <div class="toolbar-view-toggle">
+        <button class="icon-btn active" id="viewGridBtn" title="Grid View">
+            <i data-lucide="layout-grid"></i>
+        </button>
+        <button class="icon-btn" id="viewListBtn" title="List View">
+            <i data-lucide="list"></i>
+        </button>
+        
+        <button class="btn btn-primary" id="openAddModalBtn">
+            <i data-lucide="plus"></i> Add Task
+        </button>
+    </div>
+</div>
+
+<!-- Task Content Area -->
+<div class="tasks-container grid-layout" id="tasksDisplayArea">
+    <!-- Tasks loaded dynamically -->
+    <div class="loading-spinner"></div>
+</div>
+
+<!-- Add/Edit Task Glassmorphic Modal -->
+<div class="modal-overlay" id="taskModal">
+    <div class="modal-container glass-panel">
+        <div class="modal-header">
+            <h3 id="modalTitleText">Add New Task</h3>
+            <button class="icon-btn" id="closeModalBtn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <form id="taskForm" class="modal-form">
+            <input type="hidden" id="taskIdField">
+            
+            <div class="form-group">
+                <label for="taskTitle"><i data-lucide="type"></i> Task Name *</label>
+                <input type="text" id="taskTitle" required placeholder="e.g. Lab Assignment 3 - Data Structures">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group half-width">
+                    <label for="taskCategory"><i data-lucide="tag"></i> Category *</label>
+                    <select id="taskCategory" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Hackathon">Hackathon</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Exam">Exam</option>
+                        <option value="Project">Project</option>
+                        <option value="Certification">Certification</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
+                
+                <div class="form-group half-width">
+                    <label for="taskDeadline"><i data-lucide="calendar"></i> Deadline *</label>
+                    <input type="datetime-local" id="taskDeadline" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="taskDescription"><i data-lucide="align-left"></i> Description / Notes</label>
+                <textarea id="taskDescription" rows="4" placeholder="Enter notes, links, or specific requirements..."></textarea>
+            </div>
+            
+            <div class="form-row form-meta-notes">
+                <div class="smart-priority-notice">
+                    <i data-lucide="sparkles" class="purple-icon"></i>
+                    <span><strong>Smart Priority Engine:</strong> Priority is automatically calculated (High: &lt; 2 days, Medium: &lt; 7 days, Low: &gt; 7 days) and triggers notification alerts.</span>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saveTaskBtn">Save Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let tasksList = [];
+    let currentView = 'grid'; // grid or list
+
+    document.addEventListener("DOMContentLoaded", () => {
+        setupEventListeners();
+        
+        // Parse URL params for pre-applied filters (e.g. from dashboard clicks)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlStatus = urlParams.get('status');
+        if (urlStatus) {
+            document.getElementById('filterStatus').value = urlStatus;
+        }
+
+        loadTasks();
+    });
+
+    function setupEventListeners() {
+        // Modal management
+        const modal = document.getElementById('taskModal');
+        const openBtn = document.getElementById('openAddModalBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelModalBtn');
+        const form = document.getElementById('taskForm');
+        
+        const openModal = (isEdit = false) => {
+            document.getElementById('modalTitleText').innerText = isEdit ? 'Edit Task Details' : 'Add New Task';
+            modal.classList.add('active');
+        };
+        const closeModal = () => {
+            modal.classList.remove('active');
+            form.reset();
+            document.getElementById('taskIdField').value = '';
+        };
+
+        openBtn.addEventListener('click', () => openModal(false));
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const taskId = document.getElementById('taskIdField').value;
+            const title = document.getElementById('taskTitle').value;
+            const category = document.getElementById('taskCategory').value;
+            const deadline = document.getElementById('taskDeadline').value;
+            const description = document.getElementById('taskDescription').value;
+            
+            const payload = { title, category, deadline, description };
+            
+            try {
+                let res;
+                if (taskId) {
+                    // Update task (PUT)
+                    res = await fetch(`/api/tasks/${taskId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    // Create task (POST)
+                    res = await fetch('/api/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (res.ok) {
+                    showToast(taskId ? "Task updated!" : "Task created!", "success");
+                    closeModal();
+                    loadTasks();
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || "Save operation failed", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Server connection error", "error");
+            }
+        });
+
+        // View Toggles
+        const viewGridBtn = document.getElementById('viewGridBtn');
+        const viewListBtn = document.getElementById('viewListBtn');
+        const displayArea = document.getElementById('tasksDisplayArea');
+
+        viewGridBtn.addEventListener('click', () => {
+            currentView = 'grid';
+            viewGridBtn.classList.add('active');
+            viewListBtn.classList.remove('active');
+            displayArea.className = "tasks-container grid-layout";
+            renderTasks();
+        });
+
+        viewListBtn.addEventListener('click', () => {
+            currentView = 'list';
+            viewListBtn.classList.add('active');
+            viewGridBtn.classList.remove('active');
+            displayArea.className = "tasks-container list-layout";
+            renderTasks();
+        });
+
+        // Filters listeners
+        document.getElementById('filterCategory').addEventListener('change', renderTasks);
+        document.getElementById('filterPriority').addEventListener('change', renderTasks);
+        document.getElementById('filterStatus').addEventListener('change', renderTasks);
+        document.getElementById('taskSearchInput').addEventListener('input', renderTasks);
+    }
+
+    async function loadTasks() {
+        try {
+            const res = await fetch('/api/tasks');
+            tasksList = await res.json();
+            renderTasks();
+        } catch (err) {
+            console.error("Error fetching tasks:", err);
+            showToast("Failed to fetch task catalog.", "error");
+        }
+    }
+
+    function renderTasks() {
+        const area = document.getElementById('tasksDisplayArea');
+        const keyword = document.getElementById('taskSearchInput').value.toLowerCase().strip();
+        const category = document.getElementById('filterCategory').value;
+        const priority = document.getElementById('filterPriority').value;
+        const status = document.getElementById('filterStatus').value;
+
+        // Apply client filters
+        let filtered = tasksList.filter(task => {
+            const matchesSearch = task.title.toLowerCase().includes(keyword) || (task.description && task.description.toLowerCase().includes(keyword));
+            const matchesCategory = !category || task.category === category;
+            const matchesPriority = !priority || task.priority === priority;
+            
+            let matchesStatus = true;
+            if (status === 'Pending') {
+                matchesStatus = task.status === 'Pending' && !task.is_overdue;
+            } else if (status === 'Completed') {
+                matchesStatus = task.status === 'Completed';
+            } else if (status === 'Overdue') {
+                matchesStatus = task.is_overdue;
+            }
+
+            return matchesSearch && matchesCategory && matchesPriority && matchesStatus;
+        });
+
+        if (filtered.length === 0) {
+            area.innerHTML = `
+                <div class="empty-state glass-panel full-width">
+                    <i data-lucide="clipboard-list" class="large-icon"></i>
+                    <h3>No tasks found</h3>
+                    <p>Try clearing your filters or add a new task to get started.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        if (currentView === 'grid') {
+            renderGrid(filtered, area);
+        } else {
+            renderList(filtered, area);
+        }
+        lucide.createIcons();
+    }
+
+    function renderGrid(tasks, container) {
+        container.innerHTML = '';
+        tasks.forEach(task => {
+            const dateObj = new Date(task.deadline);
+            const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+            
+            const badgeClass = task.priority === 'High' ? 'badge-high' : task.priority === 'Medium' ? 'badge-med' : 'badge-low';
+            
+            const isCompleted = task.status === 'Completed';
+            const isOverdue = task.is_overdue;
+            
+            let statusBadge = `<span class="status-badge pending">Pending</span>`;
+            let borderClass = `border-${task.priority.toLowerCase()}`;
+            
+            if (isCompleted) {
+                statusBadge = `<span class="status-badge completed">Completed</span>`;
+                borderClass = 'border-completed';
+            } else if (isOverdue) {
+                statusBadge = `<span class="status-badge overdue">Overdue</span>`;
+                borderClass = 'border-overdue';
+            }
+
+            const card = document.createElement('div');
+            card.className = `task-card glass-panel ${borderClass}`;
+            card.innerHTML = `
+                <div class="task-card-header">
+                    <span class="category-tag">${task.category}</span>
+                    ${statusBadge}
+                </div>
+                <div class="task-card-body">
+                    <h4 class="task-title-text ${isCompleted ? 'line-through' : ''}">${escapeHTML(task.title)}</h4>
+                    <p class="task-desc-text">${escapeHTML(task.description || 'No description.')}</p>
+                </div>
+                <div class="task-card-footer">
+                    <div class="task-meta">
+                        <span class="task-deadline"><i data-lucide="calendar"></i> ${formattedDate}</span>
+                        <span class="priority-badge ${badgeClass}">${task.priority}</span>
+                    </div>
+                    <div class="task-card-actions">
+                        <button class="circle-btn check" onclick="toggleTaskComplete(${task.id})" title="Toggle Complete">
+                            <i data-lucide="${isCompleted ? 'rotate-ccw' : 'check'}"></i>
+                        </button>
+                        <button class="circle-btn edit" onclick="editTask(${task.id})" title="Edit Task">
+                            <i data-lucide="edit"></i>
+                        </button>
+                        <button class="circle-btn delete" onclick="deleteTask(${task.id})" title="Delete Task">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderList(tasks, container) {
+        let rowsHtml = '';
+        tasks.forEach(task => {
+            const dateObj = new Date(task.deadline);
+            const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+            
+            const badgeClass = task.priority === 'High' ? 'badge-high' : task.priority === 'Medium' ? 'badge-med' : 'badge-low';
+            
+            const isCompleted = task.status === 'Completed';
+            const isOverdue = task.is_overdue;
+            
+            let statusBadge = `<span class="status-badge pending">Pending</span>`;
+            if (isCompleted) {
+                statusBadge = `<span class="status-badge completed">Completed</span>`;
+            } else if (isOverdue) {
+                statusBadge = `<span class="status-badge overdue">Overdue</span>`;
+            }
+
+            rowsHtml += `
+                <tr class="${isCompleted ? 'row-completed' : ''}">
+                    <td>
+                        <button class="checkbox-complete" onclick="toggleTaskComplete(${task.id})">
+                            <i data-lucide="${isCompleted ? 'check-square' : 'square'}"></i>
+                        </button>
+                    </td>
+                    <td class="table-task-title">
+                        <span class="task-title-text ${isCompleted ? 'line-through' : ''}">${escapeHTML(task.title)}</span>
+                    </td>
+                    <td><span class="category-tag">${task.category}</span></td>
+                    <td><span class="task-deadline">${formattedDate}</span></td>
+                    <td><span class="priority-badge ${badgeClass}">${task.priority}</span></td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="icon-link edit" onclick="editTask(${task.id})"><i data-lucide="edit-2"></i></button>
+                            <button class="icon-link delete" onclick="deleteTask(${task.id})"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        container.innerHTML = `
+            <div class="table-wrapper glass-panel full-width">
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th width="40"></th>
+                            <th>Task Title</th>
+                            <th>Category</th>
+                            <th>Deadline</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th width="100">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function toggleTaskComplete(taskId) {
+        try {
+            const res = await fetch(`/api/tasks/${taskId}/toggle`, { method: 'POST' });
+            if (res.ok) {
+                showToast("Task updated!", "success");
+                loadTasks();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function editTask(taskId) {
+        const task = tasksList.find(t => t.id === taskId);
+        if (!task) return;
+
+        document.getElementById('taskIdField').value = task.id;
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskCategory').value = task.category;
+        
+        // Format ISO date (YYYY-MM-DDTHH:MM) for HTML5 datetime-local input
+        const d = new Date(task.deadline);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        
+        document.getElementById('taskDeadline').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.getElementById('taskDescription').value = task.description || '';
+
+        document.getElementById('modalTitleText').innerText = 'Edit Task Details';
+        document.getElementById('taskModal').classList.add('active');
+        lucide.createIcons();
+    }
+
+    async function deleteTask(taskId) {
+        if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
+        
+        try {
+            const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast("Task deleted.", "success");
+                loadTasks();
+            } else {
+                showToast("Delete failed.", "error");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+</script>
+{% endblock %}

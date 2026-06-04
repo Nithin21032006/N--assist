@@ -1,0 +1,22 @@
+# Environments
+.env
+venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local Databases
+n_assist.db
+instance/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Flask/development logs
+*.log

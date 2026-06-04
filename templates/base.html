@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}N-Assist - Personal Student OS{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS File -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="dark-theme">
+    <!-- Background Animated Blobs for Glassmorphism depth -->
+    <div class="bg-blobs">
+        <div class="blob blob-purple"></div>
+        <div class="blob blob-blue"></div>
+        <div class="blob blob-pink"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-lucide="layers" class="logo-icon"></i>
+                    <span>N-Assist</span>
+                </div>
+                <button class="close-sidebar-btn" id="closeSidebarBtn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                {% if session.user_id %}
+                <div class="nav-section-title">Workspace</div>
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.path == '/dashboard' %}active{% endif %}">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('tasks') }}" class="nav-item {% if request.path == '/tasks' %}active{% endif %}">
+                    <i data-lucide="check-square"></i>
+                    <span>Task Manager</span>
+                </a>
+                <a href="{{ url_for('todo') }}" class="nav-item {% if request.path == '/todo' %}active{% endif %}">
+                    <i data-lucide="kanban"></i>
+                    <span>To-Do Board</span>
+                </a>
+                <a href="{{ url_for('calendar') }}" class="nav-item {% if request.path == '/calendar' %}active{% endif %}">
+                    <i data-lucide="calendar"></i>
+                    <span>Calendar</span>
+                </a>
+                <a href="{{ url_for('analytics') }}" class="nav-item {% if request.path == '/analytics' %}active{% endif %}">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Analytics Hub</span>
+                </a>
+                <a href="{{ url_for('system_logs') }}" class="nav-item {% if request.path == '/system-logs' %}active{% endif %}">
+                    <i data-lucide="bell-ring"></i>
+                    <span>System Logs</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="nav-item {% if request.path == '/login' %}active{% endif %}">
+                    <i data-lucide="log-in"></i>
+                    <span>Login</span>
+                </a>
+                <a href="{{ url_for('register') }}" class="nav-item {% if request.path == '/register' %}active{% endif %}">
+                    <i data-lucide="user-plus"></i>
+                    <span>Register</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            {% if session.user_id %}
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">
+                        {{ session.user_name[0] | upper if session.user_name else 'U' }}
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">{{ session.user_name }}</span>
+                        <span class="user-role">Student</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </a>
+            </div>
+            {% endif %}
+        </aside>
+
+        <!-- Main Body Wrapper -->
+        <main class="main-wrapper">
+            <!-- Header bar -->
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="menu-toggle-btn" id="menuToggleBtn">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="header-right">
+                    <!-- Theme Toggle Switch -->
+                    <button class="icon-btn theme-toggle" id="themeToggleBtn" title="Toggle Theme">
+                        <i data-lucide="sun" class="sun-icon"></i>
+                        <i data-lucide="moon" class="moon-icon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Alerts Banner -->
+            <div class="alerts-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i data-lucide="{% if category == 'success' %}check-circle{% elif category == 'error' %}alert-triangle{% else %}info{% endif %}"></i>
+                                <span>{{ message }}</span>
+                                <button class="alert-close-btn" onclick="this.parentElement.remove()">
+                                    <i data-lucide="x"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Page Specific Content -->
+            <section class="content-container">
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+
+    <!-- AI Chatbot Drawer (Floating Widget, visible if logged in) -->
+    {% if session.user_id %}
+    <div class="ai-widget-container">
+        <button class="ai-toggle-bubble" id="aiToggleBubble" title="Ask AI Assistant">
+            <i data-lucide="bot" class="bot-icon"></i>
+            <i data-lucide="x" class="bot-close-icon"></i>
+            <span class="pulse-indicator"></span>
+        </button>
+        
+        <div class="ai-chat-drawer" id="aiChatDrawer">
+            <div class="ai-drawer-header">
+                <div class="ai-title">
+                    <i data-lucide="bot"></i>
+                    <div>
+                        <span>N-Assist AI</span>
+                        <span class="ai-status">Online (Priority Engine)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-drawer-messages" id="aiDrawerMessages">
+                <div class="ai-message bot">
+                    Hello {{ session.user_name }}! I can generate custom study plans, analyze your deadlines, and predict your stress workload. Try asking me "Give me a study plan" or "Prioritize my tasks"!
+                </div>
+            </div>
+            <div class="ai-drawer-input-area">
+                <input type="text" id="aiDrawerInput" placeholder="Ask AI study helper..." autocomplete="off">
+                <button id="aiDrawerSendBtn">
+                    <i data-lucide="send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Core Javascript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

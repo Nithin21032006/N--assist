@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - N-Assist{% endblock %}
+{% block page_title %}Analytics Hub{% endblock %}
+
+{% block content %}
+<!-- Analytics Summary row -->
+<div class="analytics-metrics-row">
+    <div class="metric-box glass-panel">
+        <span class="metric-val" id="metricTotal">0</span>
+        <span class="metric-lbl"><i data-lucide="clipboard-list"></i> Total Created</span>
+    </div>
+    <div class="metric-box glass-panel">
+        <span class="metric-val text-blue" id="metricPending">0</span>
+        <span class="metric-lbl"><i data-lucide="clock"></i> Pending Tasks</span>
+    </div>
+    <div class="metric-box glass-panel">
+        <span class="metric-val text-emerald" id="metricCompleted">0</span>
+        <span class="metric-lbl"><i data-lucide="check-circle-2"></i> Completed Tasks</span>
+    </div>
+    <div class="metric-box glass-panel">
+        <span class="metric-val text-purple" id="metricRate">0%</span>
+        <span class="metric-lbl"><i data-lucide="percent"></i> Completion Rate</span>
+    </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="analytics-charts-grid">
+    <!-- Productivity Score Doughnut Chart -->
+    <div class="chart-panel glass-panel">
+        <div class="panel-header">
+            <h3>Completion Ratio</h3>
+        </div>
+        <div class="chart-canvas-container">
+            <canvas id="ratioChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Monthly Productivity line chart -->
+    <div class="chart-panel glass-panel">
+        <div class="panel-header">
+            <h3>Yearly Completion Timeline</h3>
+        </div>
+        <div class="chart-canvas-container">
+            <canvas id="timelineChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Category Distribution Radar Chart -->
+    <div class="chart-panel glass-panel">
+        <div class="panel-header">
+            <h3>Deadlines by Academic Type</h3>
+        </div>
+        <div class="chart-canvas-container">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Weekly Performance Bar Chart -->
+    <div class="chart-panel glass-panel">
+        <div class="panel-header">
+            <h3>Weekly Focus Chart</h3>
+        </div>
+        <div class="chart-canvas-container">
+            <canvas id="weeklyChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js integration -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

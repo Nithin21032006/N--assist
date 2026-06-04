@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}To-Do Board - N-Assist{% endblock %}
+{% block page_title %}To-Do Board{% endblock %}
+
+{% block content %}
+<div class="todo-board-desc glass-panel">
+    <p><i data-lucide="info" class="blue-icon"></i> Organize your workflow. Drag and drop tasks between lanes to change their deadlines or mark them as completed.</p>
+</div>
+
+<!-- Kanban Swimlanes Grid -->
+<div class="kanban-board">
+    <!-- Today's Tasks Column -->
+    <div class="kanban-column glass-panel" id="columnToday" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'Today')">
+        <div class="kanban-column-header border-bottom-amber">
+            <div class="column-title">
+                <span class="indicator-dot amber-bg"></span>
+                <h3>Today's Tasks</h3>
+            </div>
+            <span class="column-count" id="countToday">0</span>
+        </div>
+        <div class="kanban-cards-container" id="cardsToday">
+            <!-- Loaded dynamically -->
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Upcoming Tasks Column -->
+    <div class="kanban-column glass-panel" id="columnUpcoming" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'Upcoming')">
+        <div class="kanban-column-header border-bottom-cyan">
+            <div class="column-title">
+                <span class="indicator-dot cyan-bg"></span>
+                <h3>Upcoming Tasks</h3>
+            </div>
+            <span class="column-count" id="countUpcoming">0</span>
+        </div>
+        <div class="kanban-cards-container" id="cardsUpcoming">
+            <!-- Loaded dynamically -->
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Completed Tasks Column -->
+    <div class="kanban-column glass-panel" id="columnCompleted" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'Completed')">
+        <div class="kanban-column-header border-bottom-emerald">
+            <div class="column-title">
+                <span class="indicator-dot emerald-bg"></span>
+                <h3>Completed Tasks</h3>
+            </div>
+            <span class="column-count" id="countCompleted">0</span>
+        </div>
+        <div class="kanban-cards-container" id="cardsCompleted">
+            <!-- Loaded dynamically -->
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Link to todo.js script -->
+<script src="{{ url_for('static', filename='js/todo.js') }}"></script>
+{% endblock %}

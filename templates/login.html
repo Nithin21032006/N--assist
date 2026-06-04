@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - N-Assist{% endblock %}
+{% block page_title %}Sign In{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card glass-panel">
+        <div class="auth-header">
+            <h2>Welcome Back</h2>
+            <p>Access your personal engineering student operating system</p>
+        </div>
+        
+        <form action="{{ url_for('login') }}" method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="email"><i data-lucide="mail"></i> Email Address</label>
+                <input type="email" id="email" name="email" placeholder="e.g. alex@university.edu" required autocomplete="email">
+            </div>
+            
+            <div class="form-group">
+                <label for="password"><i data-lucide="lock"></i> Password</label>
+                <div class="password-input-container">
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password')">
+                        <i data-lucide="eye" id="password-eye-icon"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="auth-actions">
+                <a href="{{ url_for('reset_password_request') }}" class="forgot-link">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-primary auth-submit-btn">
+                <span>Sign In to Dashboard</span>
+                <i data-lucide="arrow-right"></i>
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Create Account</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePasswordVisibility(fieldId) {
+    const input = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId + '-eye-icon') || document.querySelector('.password-toggle-btn i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+    } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+    }
+    lucide.createIcons();
+}
+</script>
+{% endblock %}

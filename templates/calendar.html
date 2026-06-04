@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar Planner - N-Assist{% endblock %}
+{% block page_title %}Calendar Planner{% endblock %}
+
+{% block content %}
+<div class="calendar-layout-container">
+    <!-- Calendar Left Panel: Grid -->
+    <div class="calendar-grid-panel glass-panel">
+        <div class="calendar-header-bar">
+            <button class="icon-btn" id="prevMonthBtn" title="Previous Month">
+                <i data-lucide="chevron-left"></i>
+            </button>
+            <h2 id="calendarMonthTitle" class="glow-text">Month Year</h2>
+            <button class="icon-btn" id="nextMonthBtn" title="Next Month">
+                <i data-lucide="chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="calendar-weekdays">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+        </div>
+        
+        <div class="calendar-days-grid" id="calendarDaysGrid">
+            <!-- Loaded dynamically in calendar.js -->
+        </div>
+    </div>
+    
+    <!-- Calendar Right Panel: Selected Day Task Details -->
+    <div class="calendar-details-panel glass-panel">
+        <div class="details-header">
+            <h3><i data-lucide="calendar"></i> Selected Date</h3>
+            <span class="date-badge" id="selectedDateBadge">Today</span>
+        </div>
+        
+        <div class="selected-day-tasks" id="selectedDayTasksList">
+            <div class="empty-state">
+                <i data-lucide="click" class="subtle-icon"></i>
+                <p>Click a day on the calendar to view its tasks</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Link to calendar.js script -->
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}System Logs - N-Assist{% endblock %}
+{% block page_title %}System Notification Logs{% endblock %}
+
+{% block content %}
+<div class="system-logs-desc glass-panel">
+    <div class="desc-text">
+        <h3><i data-lucide="terminal"></i> Simulation & Notification Console</h3>
+        <p>Because real Email (SMTP) and WhatsApp (Twilio) APIs require configured service accounts, N-Assist intercepts all outbound messages and stores them here. You can inspect reset-password links and background scheduler alerts below.</p>
+    </div>
+    <button class="btn btn-secondary btn-danger-hover" id="clearLogsBtn">
+        <i data-lucide="trash-2"></i> Clear Log History
+    </button>
+</div>
+
+<!-- Logs Filter bar -->
+<div class="toolbar glass-panel">
+    <div class="toolbar-search">
+        <i data-lucide="search" class="search-icon"></i>
+        <input type="text" id="logSearchInput" placeholder="Search logs by recipient or text..." autocomplete="off">
+    </div>
+    
+    <div class="toolbar-filters">
+        <select id="filterLogChannel">
+            <option value="">All Channels</option>
+            <option value="Email">Email Outbox</option>
+            <option value="WhatsApp">WhatsApp Outbox</option>
+        </select>
+    </div>
+</div>
+
+<!-- Logs List -->
+<div class="logs-container" id="logsDisplayArea">
+    <div class="loading-spinner"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let logsList = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadLogs();
+        
+        document.getElementById('filterLogChannel').addEventListener('change', renderLogs);
+        document.getElementById('logSearchInput').addEventListener('input', renderLogs);
+        
+        document.getElementById('clearLogsBtn').addEventListener('click', async () => {
+            if (!confirm("Are you sure you want to clear all notification logs?")) return;
+            try {
+                const res = await fetch('/api/logs/clear', { method: 'POST' });
+                if (res.ok) {
+                    showToast("Logs cleared successfully", "success");
+                    loadLogs();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    async function loadLogs() {
+        try {
+            const res = await fetch('/api/logs');
+            logsList = await res.json();
+            renderLogs();
+        } catch (err) {
+            console.error("Error loading logs:", err);
+            showToast("Failed to fetch notification history.", "error");
+        }
+    }
+
+    function renderLogs() {
+        const area = document.getElementById('logsDisplayArea');
+        const search = document.getElementById('logSearchInput').value.toLowerCase().strip();
+        const channel = document.getElementById('filterLogChannel').value;
+
+        const filtered = logsList.filter(log => {
+            const matchesSearch = log.recipient.toLowerCase().includes(search) || 
+                                  (log.subject && log.subject.toLowerCase().includes(search)) || 
+                                  log.message.toLowerCase().includes(search);
+            const matchesChannel = !channel || log.channel === channel;
+            return matchesSearch && matchesChannel;
+        });
+
+        if (filtered.length === 0) {
+            area.innerHTML = `
+                <div class="empty-state glass-panel">
+                    <i data-lucide="database-zap" class="large-icon"></i>
+                    <h3>Logs empty</h3>
+                    <p>No simulated emails or WhatsApp alerts have been sent yet. Create tasks with deadlines or request a password reset to trigger alerts.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        area.innerHTML = '';
+        filtered.forEach(log => {
+            const dateObj = new Date(log.created_at);
+            const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'});
+            
+            const badgeClass = log.channel === 'Email' ? 'badge-email' : 'badge-whatsapp';
+            const logIcon = log.channel === 'Email' ? 'mail' : 'message-square';
+            
+            const item = document.createElement('div');
+            item.className = 'log-item glass-panel';
+            item.innerHTML = `
+                <div class="log-item-header">
+                    <div class="log-item-title">
+                        <span class="channel-badge ${badgeClass}"><i data-lucide="${logIcon}"></i> ${log.channel}</span>
+                        <span class="log-recipient">To: <strong>${escapeHTML(log.recipient)}</strong></span>
+                    </div>
+                    <span class="log-date">${formattedDate}</span>
+                </div>
+                <div class="log-item-body">
+                    ${log.subject ? `<div class="log-subject"><strong>Subject:</strong> ${escapeHTML(log.subject)}</div>` : ''}
+                    <div class="log-message-content">
+                        <!-- We evaluate html bodies (safe because they are generated by us, but we frame them) -->
+                        <div class="message-frame">${log.channel === 'Email' ? log.message : formatWhatsAppMessage(log.message)}</div>
+                    </div>
+                </div>
+            `;
+            area.appendChild(item);
+        });
+        lucide.createIcons();
+    }
+
+    function formatWhatsAppMessage(text) {
+        // Simple WhatsApp markdown translator
+        // *text* -> <strong>text</strong>
+        // _text_ -> <em>text</em>
+        // \n -> <br>
+        let formatted = text
+            .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+        return `<div class="wa-bubble">${formatted}</div>`;
+    }
+</script>
+{% endblock %}
