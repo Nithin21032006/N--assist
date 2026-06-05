@@ -1,95 +1,170 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - N-Assist{% endblock %}
-{% block page_title %}Dashboard Overview{% endblock %}
+{% block title %}Student Command Center - N-Assist{% endblock %}
+{% block page_title %}Student Command Center{% endblock %}
+
+{% block head %}
+<style>
+    .summary-stat-pill {
+        transition: transform var(--transition-fast), border-color var(--transition-fast);
+    }
+    .summary-stat-pill:hover {
+        transform: translateY(-1px);
+    }
+    
+    .focus-task-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        transition: transform var(--transition-fast), background var(--transition-fast);
+    }
+    .focus-task-item:hover {
+        transform: translateX(4px);
+        background: rgba(255, 255, 255, 0.04);
+    }
+    body.light-theme .focus-task-item {
+        background: rgba(0, 0, 0, 0.01);
+    }
+    body.light-theme .focus-task-item:hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+    
+    .timeline-block {
+        display: flex;
+        gap: 16px;
+        position: relative;
+        padding-bottom: 12px;
+    }
+    
+    .timeline-block:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-block::before {
+        content: '';
+        position: absolute;
+        left: 27px;
+        top: 30px;
+        bottom: 0;
+        width: 2px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+    body.light-theme .timeline-block::before {
+        background: rgba(0, 0, 0, 0.08);
+    }
+    
+    .timeline-block:last-child::before {
+        display: none;
+    }
+    
+    .timeline-time {
+        width: 80px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+    }
+    
+    .timeline-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        z-index: 1;
+        flex-shrink: 0;
+    }
+    .icon-work { background: linear-gradient(135deg, #a855f7, #6366f1); }
+    .icon-break { background: linear-gradient(135deg, #10b981, #059669); }
+    
+    .timeline-content {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        padding: 12px 18px;
+        border-radius: 12px;
+    }
+    body.light-theme .timeline-content {
+        background: rgba(0, 0, 0, 0.015);
+    }
+    
+    .custom-badge-remove {
+        background: transparent;
+        border: none;
+        color: rgba(255,255,255,0.4);
+        cursor: pointer;
+        padding: 0 4px;
+        display: inline-flex;
+        align-items: center;
+    }
+    .custom-badge-remove:hover {
+        color: var(--danger-color);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Welcome Header Banner -->
+<!-- Command Welcome Header Banner -->
 <div class="welcome-banner glass-panel">
     <div class="welcome-text">
-        <h2>Hello, <span class="glow-text">{{ session.user_name }}</span>!</h2>
+        <h2 id="commandGreeting">Hello, <span class="glow-text">{{ session.user_name }}</span>!</h2>
         <p>Ready to crush your engineering academic deadlines today? Here is your study status.</p>
     </div>
-    <div class="system-indicator">
-        <span class="db-status-dot active"></span>
-        <span class="db-status-label" id="dbIndicator">Local Storage Enabled</span>
-    </div>
-</div>
-
-<!-- Stats Dashboard Grid -->
-<div class="stats-grid">
-    <div class="stat-card glass-panel border-gradient-purple" onclick="location.href='/tasks'">
-        <div class="stat-header">
-            <div class="stat-icon purple-gradient">
-                <i data-lucide="layers"></i>
-            </div>
-            <span class="stat-value" id="statTotal">-</span>
+    
+    <!-- Command Center Metrics -->
+    <div class="summary-stats-wrapper">
+        <div class="summary-stat-pill today">
+            <span class="stat-title">Today's Tasks</span>
+            <span id="summaryToday" class="stat-num">-</span>
         </div>
-        <span class="stat-label">Total Tasks</span>
-    </div>
-
-    <div class="stat-card glass-panel border-gradient-blue" onclick="location.href='/tasks?status=Pending'">
-        <div class="stat-header">
-            <div class="stat-icon blue-gradient">
-                <i data-lucide="clock"></i>
-            </div>
-            <span class="stat-value" id="statPending">-</span>
+        <div class="summary-stat-pill upcoming">
+            <span class="stat-title">Upcoming</span>
+            <span id="summaryUpcoming" class="stat-num">-</span>
         </div>
-        <span class="stat-label">Pending Tasks</span>
-    </div>
-
-    <div class="stat-card glass-panel border-gradient-emerald" onclick="location.href='/tasks?status=Completed'">
-        <div class="stat-header">
-            <div class="stat-icon emerald-gradient">
-                <i data-lucide="check-circle-2"></i>
-            </div>
-            <span class="stat-value" id="statCompleted">-</span>
+        <div class="summary-stat-pill overdue">
+            <span class="stat-title">Overdue</span>
+            <span id="summaryOverdue" class="stat-num">-</span>
         </div>
-        <span class="stat-label">Completed Tasks</span>
-    </div>
-
-    <div class="stat-card glass-panel border-gradient-rose" onclick="location.href='/tasks?status=Overdue'">
-        <div class="stat-header">
-            <div class="stat-icon rose-gradient">
-                <i data-lucide="alert-octagon"></i>
-            </div>
-            <span class="stat-value" id="statOverdue">-</span>
-        </div>
-        <span class="stat-label">Overdue Tasks</span>
-    </div>
-
-    <div class="stat-card glass-panel border-gradient-amber" onclick="location.href='/todo'">
-        <div class="stat-header">
-            <div class="stat-icon amber-gradient">
-                <i data-lucide="calendar-check"></i>
-            </div>
-            <span class="stat-value" id="statDueToday">-</span>
-        </div>
-        <span class="stat-label">Due Today</span>
-    </div>
-
-    <div class="stat-card glass-panel border-gradient-cyan" onclick="location.href='/calendar'">
-        <div class="stat-header">
-            <div class="stat-icon cyan-gradient">
-                <i data-lucide="calendar-range"></i>
-            </div>
-            <span class="stat-value" id="statUpcoming">-</span>
-        </div>
-        <span class="stat-label">Upcoming Deadlines</span>
     </div>
 </div>
 
 <!-- Main Section Split -->
 <div class="dashboard-split">
-    <!-- Left panel: Task lists & Quick Add -->
+    <!-- Left panel: Focus, Quick Add & Schedule Generator -->
     <div class="split-left">
+        
+        <!-- Recommended Focus Panel -->
+        <div class="glass-panel dashboard-panel">
+            <div class="panel-header">
+                <h3><i data-lucide="zap" style="color: var(--danger-color)"></i> Recommended Focus</h3>
+                <span class="form-help">Critical tasks for your session</span>
+            </div>
+            <div id="focusTasksList" class="dashboard-list">
+                <!-- Loaded dynamically -->
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+
         <!-- Quick Add Widget -->
         <div class="glass-panel quick-add-widget">
             <div class="panel-header">
-                <h3><i data-lucide="plus-circle" class="purple-icon"></i> Quick Add Task</h3>
+                <h3><i data-lucide="plus-circle" style="color: var(--primary-color)"></i> Quick Add Task</h3>
+                <span class="form-help" id="voiceStatus" style="color: var(--primary-color); font-weight: 700;"></span>
             </div>
             <form id="quickAddForm" class="quick-add-form">
-                <input type="text" id="quickTitle" placeholder="Task title..." required autocomplete="off">
+                <div style="position: relative; flex-grow: 2; display: flex; align-items: center;">
+                    <input type="text" id="quickTitle" placeholder="Task title..." required autocomplete="off" style="padding-right: 44px;">
+                    <button type="button" id="voiceBtn" class="icon-btn" style="position: absolute; right: 6px; padding: 6px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer;" title="Speak command (Voice Entry)">
+                        <i data-lucide="mic"></i>
+                    </button>
+                </div>
                 <select id="quickCategory" required>
                     <option value="" disabled selected>Category...</option>
                     <option value="Assignment">Assignment</option>
@@ -107,50 +182,93 @@
             </form>
         </div>
 
-        <!-- High Priority / Due Soon Tasks list -->
-        <div class="glass-panel critical-tasks-panel">
+        <!-- Smart Schedule Generator -->
+        <div class="glass-panel dashboard-panel">
             <div class="panel-header">
-                <h3><i data-lucide="alert-circle" class="rose-icon"></i> Critical Upcoming Deadlines</h3>
-                <a href="{{ url_for('tasks') }}" class="view-all-link">Manage All <i data-lucide="chevron-right"></i></a>
+                <h3><i data-lucide="calendar-clock" style="color: var(--primary-color)"></i> Smart Schedule Generator</h3>
+                <span class="form-help">Time-block tasks for study sessions</span>
             </div>
-            <div class="critical-tasks-list" id="criticalTasksList">
-                <!-- Loaded dynamically -->
-                <div class="loading-spinner"></div>
+            <form id="scheduleForm" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label><i data-lucide="clock"></i> Start Time</label>
+                        <input type="time" id="schedStart" value="18:00" required>
+                    </div>
+                    <div class="form-group half-width">
+                        <label><i data-lucide="clock"></i> End Time</label>
+                        <input type="time" id="schedEnd" value="22:00" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i data-lucide="list-todo"></i> Select Tasks to Schedule</label>
+                    <div id="scheduleTasksChecklist" class="scheduler-checklist">
+                        <!-- Loaded dynamically -->
+                        <div style="font-size: 13px; color: var(--text-muted);">No pending tasks found.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <input type="text" id="schedCustomTask" placeholder="Or type a custom task..." autocomplete="off">
+                        <button type="button" id="schedAddCustomBtn" class="btn btn-secondary btn-sm"><i data-lucide="plus"></i></button>
+                    </div>
+                    <div id="schedCustomList" class="scheduler-custom-list"></div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-sm" style="justify-content: center; width: 100%;">
+                    <i data-lucide="sparkles"></i> Generate AI Schedule
+                </button>
+            </form>
+            
+            <div id="scheduleResult" style="margin-top: 20px; display: none;">
+                <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; font-family: var(--font-mono);">GENERATED TIMELINE:</h4>
+                <div id="scheduleTimeline" class="dashboard-list">
+                    <!-- Timelines populated dynamically -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Right panel: Productivity charts & insights widget -->
+    <!-- Right panel: Academic portfolio counters, goal list, and charts -->
     <div class="split-right">
-        <!-- Completion Rate Progress Widget -->
-        <div class="glass-panel progress-widget">
+        
+        <!-- Academic Tracker Summary Card -->
+        <div class="glass-panel dashboard-panel">
             <div class="panel-header">
-                <h3>Productivity Score</h3>
+                <h3><i data-lucide="award" style="color: var(--primary-color)"></i> Academic Tracker</h3>
+                <a href="/academic-tracker" class="view-all-link">Manage Portfolio <i data-lucide="chevron-right"></i></a>
             </div>
-            <div class="score-circle-container">
-                <div class="score-circle">
-                    <svg class="progress-ring" width="120" height="120">
-                        <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
-                        <circle class="progress-ring-bar" id="scoreRing" stroke="url(#purpleBlueGradient)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
-                        <defs>
-                            <linearGradient id="purpleBlueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#a855f7" />
-                                <stop offset="100%" stop-color="#6366f1" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="score-text">
-                        <span id="scorePercentage">0%</span>
-                        <small>Completed</small>
-                    </div>
+            <div class="academic-summary-grid">
+                <div class="academic-summary-card">
+                    <span class="card-num" style="color: #00ffd0;" id="dashWorkshops">0</span>
+                    <div class="card-lbl">Workshops</div>
                 </div>
-            </div>
-            <div class="productivity-insights" id="productivityInsights">
-                Loading insights...
+                <div class="academic-summary-card">
+                    <span class="card-num" style="color: #00ff9f;" id="dashHackathons">0</span>
+                    <div class="card-lbl">Hackathons</div>
+                </div>
+                <div class="academic-summary-card">
+                    <span class="card-num" style="color: #00b0ff;" id="dashCertifications">0</span>
+                    <div class="card-lbl">Certifications</div>
+                </div>
+                <div class="academic-summary-card">
+                    <span class="card-num" style="color: #ffd600;" id="dashSeminars">0</span>
+                    <div class="card-lbl">Seminars</div>
+                </div>
             </div>
         </div>
 
-        <!-- Weekly Activity Mini Chart -->
+        <!-- Goals Progress Card -->
+        <div class="glass-panel dashboard-panel">
+            <div class="panel-header">
+                <h3><i data-lucide="target" style="color: var(--primary-color)"></i> Active Goals</h3>
+                <a href="/goals" class="view-all-link">Manage Goals <i data-lucide="chevron-right"></i></a>
+            </div>
+            <div id="dashActiveGoalsList" class="dashboard-list">
+                <!-- Loaded dynamically -->
+                <div style="font-size: 13px; color: var(--text-muted); text-align: center;">No active goals found.</div>
+            </div>
+        </div>
+
+        <!-- Weekly Performance Mini Chart -->
         <div class="glass-panel mini-chart-panel">
             <div class="panel-header">
                 <h3>Weekly Performance</h3>
@@ -168,54 +286,66 @@
 <!-- Inject Chart.js CDN for Analytics rendering -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    const userName = "{{ session.user_name }}";
+    let customSchedTasks = [];
+
     document.addEventListener("DOMContentLoaded", () => {
+        setGreeting();
         loadDashboardStats();
         setupQuickAdd();
+        setupScheduleGenerator();
+        setupVoiceEntry();
     });
+
+    function setGreeting() {
+        const hour = new Date().getHours();
+        let greeting = "Hello";
+        if (hour < 12) greeting = "Good Morning";
+        else if (hour < 18) greeting = "Good Afternoon";
+        else greeting = "Good Evening";
+        
+        document.getElementById('commandGreeting').innerHTML = `${greeting}, <span class="glow-text">${escapeHTML(userName)}</span>`;
+    }
 
     async function loadDashboardStats() {
         try {
             const res = await fetch('/api/dashboard/stats');
             const data = await res.json();
             
-            // Set stats values
-            document.getElementById('statTotal').innerText = data.total;
-            document.getElementById('statPending').innerText = data.pending;
-            document.getElementById('statCompleted').innerText = data.completed;
-            document.getElementById('statOverdue').innerText = data.overdue;
-            document.getElementById('statDueToday').innerText = data.due_today;
-            document.getElementById('statUpcoming').innerText = data.upcoming;
+            // Set Command Center top counters
+            document.getElementById('summaryToday').innerText = data.due_today;
+            document.getElementById('summaryUpcoming').innerText = data.upcoming;
+            document.getElementById('summaryOverdue').innerText = data.overdue;
 
-            // Database indicator
-            const dbIndicator = document.getElementById('dbIndicator');
-            if (data.using_postgres) {
-                dbIndicator.innerText = "Neon PostgreSQL Online";
-                dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#a855f7"; // Neon purple dot
-            } else if (data.using_mysql) {
-                dbIndicator.innerText = "MySQL Production Online";
-                dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#10b981";
-            } else {
-                dbIndicator.innerText = "SQLite Environment Running";
-                dbIndicator.parentElement.querySelector('.db-status-dot').style.backgroundColor = "#3b82f6";
-            }
+            // Render focus list
+            renderFocusTasks(data.focus_list);
 
-            // Render upcoming list
-            renderCriticalTasks(data.upcoming_list);
+            // Render Academic Tracker Summary
+            document.getElementById('dashWorkshops').innerText = data.academic_stats.Workshops;
+            document.getElementById('dashHackathons').innerText = data.academic_stats.Hackathons;
+            document.getElementById('dashCertifications').innerText = data.academic_stats.Certifications;
+            document.getElementById('dashSeminars').innerText = data.academic_stats.Seminars;
 
-            // Fetch full analytics data for completion score and mini chart
-            loadMiniAnalytics(data.completed, data.total);
+            // Render Active Goals List
+            renderDashGoals(data.active_goals);
+
+            // Populate checkboxes for scheduler
+            populateSchedulerTasks(data.focus_list, data.upcoming_list);
+
+            // Fetch weekly activity for performance chart
+            loadMiniAnalytics();
         } catch (err) {
-            console.error("Error loading dashboard stats:", err);
+            console.error("Error loading command center stats:", err);
         }
     }
 
-    function renderCriticalTasks(tasks) {
-        const container = document.getElementById('criticalTasksList');
+    function renderFocusTasks(tasks) {
+        const container = document.getElementById('focusTasksList');
         if (!tasks || tasks.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <i data-lucide="check-circle" class="success-icon"></i>
-                    <p>No critical deadlines coming up! Keep up the good work.</p>
+                <div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-muted);">
+                    <i data-lucide="check-circle" class="success-icon" style="width: 24px; height: 24px; margin-bottom: 8px;"></i>
+                    <p style="font-size: 14px;">No recommended focus tasks. All caught up!</p>
                 </div>
             `;
             lucide.createIcons();
@@ -226,24 +356,23 @@
         tasks.forEach(task => {
             const dateObj = new Date(task.deadline);
             const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
-            
             const badgeClass = task.priority === 'High' ? 'badge-high' : task.priority === 'Medium' ? 'badge-med' : 'badge-low';
             
             const item = document.createElement('div');
-            item.className = 'critical-task-item glass-panel';
+            item.className = 'focus-task-item';
             item.innerHTML = `
-                <div class="task-details">
-                    <div class="task-title-line">
-                        <span class="task-title-text">${escapeHTML(task.title)}</span>
-                        <span class="category-tag">${task.category}</span>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-weight: 700; font-size: 14px;">${escapeHTML(task.title)}</span>
+                        <span class="category-tag" style="font-size: 10px; padding: 2px 6px;">${task.category}</span>
                     </div>
-                    <div class="task-meta-line">
-                        <span class="task-date"><i data-lucide="calendar"></i> ${formattedDate}</span>
-                        <span class="priority-badge ${badgeClass}">${task.priority}</span>
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-muted);">
+                        <span><i data-lucide="calendar" style="width: 12px; height: 12px; vertical-align: middle;"></i> ${formattedDate}</span>
+                        <span class="priority-badge ${badgeClass}" style="font-size: 9px; padding: 1px 4px;">${task.priority}</span>
                     </div>
                 </div>
-                <button class="action-check-btn" onclick="toggleTask(${task.id})" title="Mark Complete">
-                    <i data-lucide="check"></i>
+                <button class="action-check-btn" onclick="toggleTask(${task.id})" title="Mark Complete" style="width: 28px; height: 28px; border-radius: 8px;">
+                    <i data-lucide="check" style="width: 14px; height: 14px;"></i>
                 </button>
             `;
             container.appendChild(item);
@@ -263,33 +392,73 @@
         }
     }
 
-    async function loadMiniAnalytics(completed, total) {
-        // Calculate circle percentage
-        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-        document.getElementById('scorePercentage').innerText = percentage + '%';
-        
-        // Update circle ring SVG stroke-dashoffset
-        const circle = document.getElementById('scoreRing');
-        const radius = circle.r.baseVal.value;
-        const circumference = radius * 2 * Math.PI;
-        circle.style.strokeDasharray = `${circumference} ${circumference}`;
-        
-        const offset = circumference - (percentage / 100) * circumference;
-        circle.style.strokeDashoffset = offset;
-
-        // Populate insights text
-        const insights = document.getElementById('productivityInsights');
-        if (total === 0) {
-            insights.innerText = "Add your school tasks or personal milestones to generate productivity metrics.";
-        } else if (percentage >= 80) {
-            insights.innerHTML = "🔥 <strong>Outstanding!</strong> You're managing tasks efficiently. Keep checking off deadlines to maintain this high rate.";
-        } else if (percentage >= 50) {
-            insights.innerHTML = "⚡ <strong>On Track.</strong> You've finished more than half your work. Dedicate time this afternoon to knock out a couple of High items.";
-        } else {
-            insights.innerHTML = "⚠️ <strong>Task Backlog.</strong> Deadlines are accumulating. Use N-Assist AI Study planner to schedule focus sessions.";
+    function renderDashGoals(goals) {
+        const container = document.getElementById('dashActiveGoalsList');
+        if (!goals || goals.length === 0) {
+            container.innerHTML = `
+                <div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 12px 0;">
+                    No active goals found.
+                </div>
+            `;
+            return;
         }
 
-        // Load mini weekly chart
+        container.innerHTML = '';
+        goals.forEach(g => {
+            const dateObj = new Date(g.deadline);
+            const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+            
+            const goalEl = document.createElement('div');
+            goalEl.style.display = 'flex';
+            goalEl.style.flexDirection = 'column';
+            goalEl.style.gap = '6px';
+            goalEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-primary);">
+                    <span>${escapeHTML(g.title)}</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">${g.current_value}/${g.target_value}</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                    <div style="width: ${g.progress_percentage}%; height: 100%; background: var(--primary-gradient); border-radius: 4px;"></div>
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: right;">
+                    Due: ${formattedDate}
+                </div>
+            `;
+            container.appendChild(goalEl);
+        });
+    }
+
+    function populateSchedulerTasks(focusTasks, upcomingTasks) {
+        const checklist = document.getElementById('scheduleTasksChecklist');
+        // Combine and unique by ID
+        const allTasksMap = {};
+        if (focusTasks) focusTasks.forEach(t => allTasksMap[t.id] = t);
+        if (upcomingTasks) upcomingTasks.forEach(t => allTasksMap[t.id] = t);
+        
+        const tasks = Object.values(allTasksMap);
+        
+        if (tasks.length === 0) {
+            checklist.innerHTML = `<div style="font-size: 13px; color: var(--text-muted);">No pending tasks found.</div>`;
+            return;
+        }
+        
+        checklist.innerHTML = '';
+        tasks.forEach(t => {
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.gap = '8px';
+            div.innerHTML = `
+                <input type="checkbox" id="sched-chk-${t.id}" value="${t.id}" style="width: auto; cursor: pointer;">
+                <label for="sched-chk-${t.id}" style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-secondary); width: auto; display: inline;">
+                    ${escapeHTML(t.title)} (${t.category})
+                </label>
+            `;
+            checklist.appendChild(div);
+        });
+    }
+
+    async function loadMiniAnalytics() {
         try {
             const res = await fetch('/api/analytics/data');
             const data = await res.json();
@@ -313,14 +482,15 @@
                 datasets: [{
                     label: 'Tasks Completed',
                     data: weeklyActivity,
-                    borderColor: '#a855f7',
-                    borderWidth: 2.5,
-                    backgroundColor: 'rgba(168, 85, 247, 0.08)',
+                    borderColor: '#00f2fe',
+                    borderWidth: 2,
+                    backgroundColor: 'rgba(0, 242, 254, 0.05)',
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#6366f1',
-                    pointBorderColor: '#fff',
-                    pointRadius: 3
+                    pointBackgroundColor: '#00ffd0',
+                    pointBorderColor: '#07080a',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -332,11 +502,11 @@
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { color: 'rgba(255, 255, 255, 0.4)', font: { size: 10 } }
+                        ticks: { color: 'rgba(255, 255, 255, 0.3)', font: { size: 10, family: 'Outfit' } }
                     },
                     y: {
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { stepSize: 1, color: 'rgba(255, 255, 255, 0.4)', font: { size: 10 } }
+                        ticks: { stepSize: 1, color: 'rgba(255, 255, 255, 0.3)', font: { size: 10, family: 'Outfit' } }
                     }
                 }
             }
@@ -372,6 +542,310 @@
                 showToast("Connection error", "error");
             }
         });
+    }
+
+    function setupScheduleGenerator() {
+        // Custom tasks tag handlers
+        const customTaskInput = document.getElementById('schedCustomTask');
+        const addCustomBtn = document.getElementById('schedAddCustomBtn');
+        const customList = document.getElementById('schedCustomList');
+        
+        const renderCustomBadges = () => {
+            customList.innerHTML = '';
+            customSchedTasks.forEach((t, i) => {
+                const badge = document.createElement('span');
+                badge.className = 'category-tag';
+                badge.style.display = 'inline-flex';
+                badge.style.alignItems = 'center';
+                badge.style.gap = '6px';
+                badge.innerHTML = `
+                    ${escapeHTML(t)}
+                    <button type="button" class="custom-badge-remove" onclick="removeCustomSchedTask(${i})">
+                        <i data-lucide="x" style="width:12px; height:12px;"></i>
+                    </button>
+                `;
+                customList.appendChild(badge);
+            });
+            lucide.createIcons();
+        };
+
+        window.removeCustomSchedTask = (index) => {
+            customSchedTasks.splice(index, 1);
+            renderCustomBadges();
+        };
+
+        addCustomBtn.addEventListener('click', () => {
+            const val = customTaskInput.value.trim();
+            if (val) {
+                customSchedTasks.push(val);
+                customTaskInput.value = '';
+                renderCustomBadges();
+            }
+        });
+
+        customTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomBtn.click();
+            }
+        });
+
+        // Form submission
+        const form = document.getElementById('scheduleForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const start_time = document.getElementById('schedStart').value;
+            const end_time = document.getElementById('schedEnd').value;
+            
+            // Get checked tasks
+            const task_ids = [];
+            const checkboxes = document.querySelectorAll('#scheduleTasksChecklist input[type="checkbox"]:checked');
+            checkboxes.forEach(cb => task_ids.push(parseInt(cb.value)));
+            
+            if (task_ids.length === 0 && customSchedTasks.length === 0) {
+                showToast("Please select at least one task or add a custom task", "error");
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/ai/schedule-generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_time,
+                        end_time,
+                        task_ids,
+                        custom_tasks: customSchedTasks
+                    })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    renderScheduleResult(data.schedule);
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || "Failed to generate schedule", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Connection error", "error");
+            }
+        });
+    }
+
+    function renderScheduleResult(schedule) {
+        const resultContainer = document.getElementById('scheduleResult');
+        const timeline = document.getElementById('scheduleTimeline');
+        
+        timeline.innerHTML = '';
+        schedule.forEach(block => {
+            const isWork = block.type === 'Work';
+            const iconName = isWork ? 'book-open' : 'coffee';
+            const classIcon = isWork ? 'icon-work' : 'icon-break';
+            
+            const div = document.createElement('div');
+            div.className = 'timeline-block';
+            div.innerHTML = `
+                <div class="timeline-time">${block.start} - ${block.end}</div>
+                <div class="timeline-icon ${classIcon}">
+                    <i data-lucide="${iconName}" style="width: 16px; height: 16px;"></i>
+                </div>
+                <div class="timeline-content">
+                    <span style="font-weight: 700; font-size: 14px; color: var(--text-primary);">${escapeHTML(block.task)}</span>
+                    <span style="font-size: 11px; float: right; font-weight:700; color: ${isWork ? '#a855f7' : '#10b981'}; text-transform: uppercase;">
+                        ${block.type}
+                    </span>
+                </div>
+            `;
+            timeline.appendChild(div);
+        });
+        
+        lucide.createIcons();
+        resultContainer.style.display = 'block';
+        resultContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function setupVoiceEntry() {
+        const voiceBtn = document.getElementById('voiceBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        
+        // Check browser speech API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            voiceBtn.style.display = 'none';
+            return;
+        }
+        
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        let isListening = false;
+        
+        voiceBtn.addEventListener('click', () => {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    voiceStatus.innerText = "Listening...";
+                    voiceBtn.style.color = '#f43f5e';
+                    voiceBtn.classList.add('pulse');
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        });
+        
+        recognition.onend = () => {
+            isListening = false;
+            voiceBtn.style.color = 'var(--text-secondary)';
+            voiceBtn.classList.remove('pulse');
+        };
+        
+        recognition.onerror = (e) => {
+            console.error("Speech error", e);
+            voiceStatus.innerText = "Error matching speech";
+            setTimeout(() => voiceStatus.innerText = "", 2000);
+        };
+        
+        recognition.onresult = (e) => {
+            const transcript = e.results[0][0].transcript;
+            voiceStatus.innerText = "Processing voice...";
+            
+            setTimeout(() => {
+                const parsed = parseVoiceCommand(transcript);
+                
+                document.getElementById('quickTitle').value = parsed.title;
+                document.getElementById('quickCategory').value = parsed.category;
+                document.getElementById('quickDeadline').value = parsed.deadline;
+                
+                voiceStatus.innerText = "";
+                showToast("Speech parsed successfully!", "success");
+            }, 500);
+        };
+    }
+
+    function parseVoiceCommand(text) {
+        let lower = text.toLowerCase().trim();
+        
+        // Strip prefixes
+        const prefixes = [
+            /^remind me to\s+/i,
+            /^add task\s+/i,
+            /^create task\s+/i,
+            /^add a task to\s+/i
+        ];
+        for (let p of prefixes) {
+            lower = lower.replace(p, '');
+        }
+        
+        // Find category from keywords
+        let category = "Personal";
+        const catKeywords = {
+            "Assignment": ["assignment", "homework", "submit", "writeup", "lab", "da", "daa", "dbms"],
+            "Hackathon": ["hackathon", "hack", "competition"],
+            "Workshop": ["workshop", "bootcamp", "training"],
+            "Exam": ["exam", "test", "quiz", "midterm", "final", "prep"],
+            "Project": ["project", "build", "coding", "code"],
+            "Certification": ["certification", "cert", "course", "coursera", "udemy"],
+            "Personal": ["personal", "buy", "call", "meet", "clean", "remind"]
+        };
+        
+        for (let [cat, keywords] of Object.entries(catKeywords)) {
+            if (keywords.some(k => lower.includes(k))) {
+                category = cat;
+                break;
+            }
+        }
+        
+        // Try to extract date/time
+        let deadlineDate = new Date();
+        deadlineDate.setDate(deadlineDate.getDate() + 1); // default to tomorrow
+        deadlineDate.setHours(17, 0, 0, 0); // default to 5 PM
+        
+        // Simple search for time
+        let hour = 17;
+        let min = 0;
+        
+        const timeMatch = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+        if (timeMatch) {
+            hour = parseInt(timeMatch[1]);
+            if (timeMatch[2]) min = parseInt(timeMatch[2]);
+            let ampm = timeMatch[3];
+            if (ampm) {
+                ampm = ampm.toLowerCase();
+                if (ampm === 'pm' && hour < 12) hour += 12;
+                if (ampm === 'am' && hour === 12) hour = 0;
+            }
+        }
+        
+        let titleStr = lower;
+        
+        if (lower.includes("tomorrow")) {
+            const today = new Date();
+            today.setDate(today.getDate() + 1);
+            deadlineDate = today;
+            titleStr = lower.substring(0, lower.indexOf("tomorrow")).trim();
+        } else if (lower.includes("today")) {
+            deadlineDate = new Date();
+            titleStr = lower.substring(0, lower.indexOf("today")).trim();
+        } else if (lower.includes("next week")) {
+            const d = new Date();
+            d.setDate(d.getDate() + 7);
+            deadlineDate = d;
+            titleStr = lower.substring(0, lower.indexOf("next week")).trim();
+        } else {
+            // Check day of week
+            const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+            for (let i = 0; i < 7; i++) {
+                const dayIdx = lower.indexOf(days[i]);
+                if (dayIdx !== -1) {
+                    const currentDay = new Date().getDay();
+                    let daysToAdd = i - currentDay;
+                    if (daysToAdd <= 0) daysToAdd += 7; // next week's day
+                    
+                    const d = new Date();
+                    d.setDate(d.getDate() + daysToAdd);
+                    deadlineDate = d;
+                    titleStr = lower.substring(0, dayIdx).trim();
+                    break;
+                }
+            }
+        }
+        
+        deadlineDate.setHours(hour, min, 0, 0);
+        
+        // Clean trailing "at"
+        titleStr = titleStr.replace(/\bat\b\s*$/i, '').trim();
+        titleStr = titleStr.replace(/\bfor\b\s*$/i, '').trim();
+        titleStr = titleStr.replace(/\bon\b\s*$/i, '').trim();
+        
+        // Capitalize
+        if (titleStr.length > 0) {
+            titleStr = titleStr.charAt(0).toUpperCase() + titleStr.slice(1);
+        } else {
+            titleStr = "Voice Task Entry";
+        }
+        
+        // Format to yyyy-MM-ddThh:mm
+        const yyyy = deadlineDate.getFullYear();
+        const MM = String(deadlineDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(deadlineDate.getDate()).padStart(2, '0');
+        const hh = String(deadlineDate.getHours()).padStart(2, '0');
+        const mm = String(deadlineDate.getMinutes()).padStart(2, '0');
+        
+        const isoString = `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
+        
+        return {
+            title: titleStr,
+            category: category,
+            deadline: isoString
+        };
     }
 </script>
 {% endblock %}

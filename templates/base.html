@@ -62,9 +62,26 @@
                     <i data-lucide="bar-chart-3"></i>
                     <span>Analytics Hub</span>
                 </a>
+                <a href="{{ url_for('academic_tracker') }}" class="nav-item {% if request.path == '/academic-tracker' %}active{% endif %}">
+                    <i data-lucide="award"></i>
+                    <span>Academic Tracker</span>
+                </a>
+                <a href="{{ url_for('goals') }}" class="nav-item {% if request.path == '/goals' %}active{% endif %}">
+                    <i data-lucide="target"></i>
+                    <span>Goal Tracking</span>
+                </a>
+                <a href="{{ url_for('opportunities') }}" class="nav-item {% if request.path == '/opportunities' %}active{% endif %}">
+                    <i data-lucide="compass"></i>
+                    <span>Opportunity Hub</span>
+                </a>
                 <a href="{{ url_for('system_logs') }}" class="nav-item {% if request.path == '/system-logs' %}active{% endif %}">
                     <i data-lucide="bell-ring"></i>
                     <span>System Logs</span>
+                </a>
+                <a href="#" class="nav-item" id="aiSidebarNav">
+                    <i data-lucide="bot"></i>
+                    <span>AI Copilot</span>
+                    <span class="search-keycap" style="margin-left: auto; font-size: 9px; padding: 1px 4px;">⌥A</span>
                 </a>
                 {% else %}
                 <a href="{{ url_for('login') }}" class="nav-item {% if request.path == '/login' %}active{% endif %}">
@@ -106,6 +123,13 @@
                     </button>
                     <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 </div>
+                {% if session.user_id %}
+                <div class="search-command-bar" id="headerSearchCmd" title="Ask AI anything (Press '/' to search)" onclick="document.getElementById('aiToggleBubble').click()">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <span class="search-placeholder">Search or ask AI...</span>
+                    <span class="search-keycap">/</span>
+                </div>
+                {% endif %}
                 <div class="header-right">
                     <!-- Theme Toggle Switch -->
                     <button class="icon-btn theme-toggle" id="themeToggleBtn" title="Toggle Theme">
@@ -157,6 +181,9 @@
                         <span class="ai-status">Online (Priority Engine)</span>
                     </div>
                 </div>
+                <button class="drawer-close-btn" id="aiDrawerCloseBtn" title="Close AI Panel" onclick="document.getElementById('aiToggleBubble').click()">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
             <div class="ai-drawer-messages" id="aiDrawerMessages">
                 <div class="ai-message bot">

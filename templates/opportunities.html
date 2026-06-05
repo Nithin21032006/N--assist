@@ -1,0 +1,628 @@
+{% extends 'base.html' %}
+
+{% block title %}Opportunity Hub - N-Assist{% endblock %}
+{% block page_title %}Opportunity Hub{% endblock %}
+
+{% block head %}
+<style>
+    .opp-tabs-bar {
+        display: flex;
+        gap: 12px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    
+    .opp-tab-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--text-secondary);
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+    
+    .opp-tab-btn:hover {
+        background: rgba(255,255,255,0.03);
+        color: var(--text-primary);
+    }
+    
+    .opp-tab-btn.active {
+        background: var(--primary-gradient);
+        color: #fff;
+        box-shadow: 0 4px 12px var(--shadow-glow);
+    }
+
+    .opp-container {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+    }
+
+    .opp-main-panel {
+        flex: 1.6;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .opp-side-panel {
+        flex: 1;
+        position: sticky;
+        top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .opp-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .opp-card {
+        padding: 24px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+        transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-smooth);
+        animation: oppFadeIn 0.3s ease-out;
+    }
+    
+    .opp-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .closing-soon-banner {
+        background: rgba(244, 63, 94, 0.12);
+        border: 1px solid rgba(244, 63, 94, 0.2);
+        color: var(--danger-color);
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .opp-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .opp-title-block {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .opp-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+
+    .opp-category-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 6px;
+        width: fit-content;
+    }
+    
+    .cat-hackathon { background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2); }
+    .cat-internship { background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .cat-workshop { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .cat-webinar { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .cat-scholarship { background: rgba(236, 72, 153, 0.12); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.2); }
+    .cat-competition { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .cat-default { background: rgba(6, 182, 212, 0.12); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.2); }
+
+    .opp-stars {
+        display: flex;
+        gap: 2px;
+        color: #fbbf24;
+    }
+    
+    .opp-stars i {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+    }
+
+    .opp-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px 16px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .opp-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .opp-meta-item i {
+        width: 16px;
+        height: 16px;
+        color: var(--text-muted);
+    }
+
+    .opp-skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .opp-skill-pill {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border-color);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    .opp-details {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        background: rgba(255, 255, 255, 0.01);
+        padding: 12px;
+        border-radius: 12px;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .opp-match-pill {
+        background: rgba(168, 85, 247, 0.08);
+        border: 1px solid rgba(168, 85, 247, 0.15);
+        color: #c084fc;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        width: fit-content;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .opp-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        border-top: 1px solid var(--border-color);
+        padding-top: 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    @keyframes oppFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1024px) {
+        .opp-container {
+            flex-direction: column;
+        }
+        .opp-side-panel {
+            width: 100%;
+            position: relative;
+            top: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="opp-tabs-bar">
+    <button class="opp-tab-btn active" onclick="switchTab('recommend')"><i data-lucide="sparkles"></i> Recommended For You</button>
+    <button class="opp-tab-btn" onclick="switchTab('explore')"><i data-lucide="compass"></i> Explore All</button>
+    <button class="opp-tab-btn" onclick="switchTab('saved')"><i data-lucide="bookmark"></i> Saved & Applied</button>
+    <button class="opp-tab-btn" onclick="switchTab('missed')"><i data-lucide="alert-octagon"></i> Missed Tracker</button>
+</div>
+
+<div class="opp-container">
+    <!-- Main Content Panel -->
+    <div class="opp-main-panel">
+        
+        <!-- Explore Search Filters (Visible only in Explore tab) -->
+        <div class="glass-panel" id="exploreFilters" style="padding: 16px; display: none; gap: 12px; flex-wrap: wrap;">
+            <input type="text" id="oppSearch" placeholder="Search opportunities..." style="flex: 2; min-width: 200px;" autocomplete="off">
+            <select id="oppCategoryFilter" style="flex: 1; min-width: 150px;">
+                <option value="">All Categories</option>
+                <option value="Hackathon">Hackathons</option>
+                <option value="Internship">Internships</option>
+                <option value="Workshop">Workshops</option>
+                <option value="Webinar">Webinars</option>
+                <option value="Scholarship">Scholarships</option>
+                <option value="Certification">Certifications</option>
+                <option value="Coding Competition">Coding Competitions</option>
+                <option value="Open Source Program">Open Source Programs</option>
+                <option value="Campus Ambassador Program">Campus Ambassadors</option>
+                <option value="Research Program">Research Programs</option>
+            </select>
+        </div>
+
+        <!-- Missed Analysis Panel (Visible only in Missed tab) -->
+        <div class="alert alert-error" id="missedAnalysisAlert" style="display: none; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; font-weight: 700;">
+                <i data-lucide="shield-alert"></i>
+                <span>N-Assist Missed Opportunity Tracker Analysis</span>
+            </div>
+            <p id="missedAnalysisText" style="font-size: 13px; line-height: 1.5; margin: 0;"></p>
+        </div>
+
+        <!-- Opportunities Grid -->
+        <div class="opp-grid" id="opportunitiesGrid">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Right Side Profile & Actions Panel -->
+    <div class="opp-side-panel">
+        
+        <!-- Profile Config Card -->
+        <div class="glass-panel" style="padding: 24px;">
+            <div class="panel-header" style="margin-bottom: 16px; padding-bottom: 8px;">
+                <h3><i data-lucide="user-cog" class="purple-icon"></i> Recommendation Profile</h3>
+            </div>
+            <form id="profileForm" style="display: flex; flex-direction: column; gap: 14px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label><i data-lucide="git-branch"></i> Academic Branch</label>
+                    <input type="text" id="profBranch" placeholder="e.g. CSE, ECE, ME" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label><i data-lucide="graduation-cap"></i> Academic Year</label>
+                    <select id="profYear" required>
+                        <option value="" disabled selected>Select Year...</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label><i data-lucide="code"></i> Skills (Comma-separated)</label>
+                    <input type="text" id="profSkills" placeholder="e.g. Python, Web Development, AI/ML" required>
+                    <span class="form-help">Matches matching tags on incoming opportunities.</span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="justify-content: center; width: 100%;">
+                    <i data-lucide="save"></i> Update Profile
+                </button>
+            </form>
+        </div>
+
+        <!-- Sync Actions Card -->
+        <div class="glass-panel" style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Refresh aggregated listings from Devfolio, Unstop, MLH, Kaggle, GSoC, etc.</span>
+            <button class="btn btn-secondary btn-sm" id="syncFeedsBtn" style="justify-content: center;">
+                <i data-lucide="refresh-cw"></i> Sync Feeds & Re-Aggregate
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let activeTab = 'recommend'; // 'recommend', 'explore', 'saved', 'missed'
+    let oppData = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadProfile();
+        loadTabContent();
+        setupProfileForm();
+        setupFilters();
+        setupSyncBtn();
+    });
+
+    async function loadProfile() {
+        try {
+            const res = await fetch('/api/profile');
+            const data = await res.json();
+            document.getElementById('profBranch').value = data.branch;
+            document.getElementById('profYear').value = data.year;
+            document.getElementById('profSkills').value = data.skills;
+        } catch (err) {
+            console.error("Profile load error:", err);
+        }
+    }
+
+    async function setupProfileForm() {
+        const form = document.getElementById('profileForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const branch = document.getElementById('profBranch').value.trim();
+            const year = document.getElementById('profYear').value;
+            const skills = document.getElementById('profSkills').value.trim();
+            
+            try {
+                const res = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ branch, year, skills })
+                });
+                if (res.ok) {
+                    showToast("Profile recommendations updated!", "success");
+                    loadTabContent();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Connection error", "error");
+            }
+        });
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.opp-tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Find correct button
+        event.currentTarget.classList.add('active');
+        activeTab = tabName;
+        
+        // Toggle Filters bar
+        const filters = document.getElementById('exploreFilters');
+        if (activeTab === 'explore') {
+            filters.style.display = 'flex';
+        } else {
+            filters.style.display = 'none';
+        }
+
+        // Toggle Missed Alert
+        const missedAlert = document.getElementById('missedAnalysisAlert');
+        if (activeTab === 'missed') {
+            missedAlert.style.display = 'flex';
+        } else {
+            missedAlert.style.display = 'none';
+        }
+        
+        loadTabContent();
+    }
+
+    async function loadTabContent() {
+        const grid = document.getElementById('opportunitiesGrid');
+        grid.innerHTML = '<div class="loading-spinner"></div>';
+        
+        let url = '/api/opportunities';
+        if (activeTab === 'recommend') {
+            url += '?recommend=true';
+        } else if (activeTab === 'saved') {
+            url += '/saved-applied';
+        } else if (activeTab === 'missed') {
+            url += '/missed';
+        }
+        
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            
+            if (activeTab === 'missed') {
+                const data = await res.json();
+                oppData = data.missed;
+                document.getElementById('missedAnalysisText').innerText = data.pattern_summary;
+            } else {
+                oppData = await res.json();
+            }
+            
+            renderOpportunities();
+        } catch (err) {
+            console.error(err);
+            grid.innerHTML = `
+                <div class="empty-state" style="padding:40px; text-align:center; color:var(--text-muted);">
+                    <i data-lucide="alert-triangle" style="width:40px; height:40px; color:var(--danger-color); margin-bottom:12px;"></i>
+                    <p>Failed to load opportunities. Ensure background server database is running.</p>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+    }
+
+    function renderOpportunities() {
+        const grid = document.getElementById('opportunitiesGrid');
+        
+        let filtered = [...oppData];
+        
+        if (activeTab === 'explore') {
+            const query = document.getElementById('oppSearch').value.toLowerCase();
+            const cat = document.getElementById('oppCategoryFilter').value;
+            
+            filtered = filtered.filter(o => {
+                const matchesSearch = o.name.toLowerCase().includes(query) || (o.details && o.details.toLowerCase().includes(query));
+                const matchesCat = !cat || o.category === cat;
+                return matchesSearch && matchesCat;
+            });
+        }
+        
+        if (filtered.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                    <i data-lucide="compass" style="width: 48px; height: 48px; margin-bottom: 12px; color: var(--text-muted);"></i>
+                    <p>No opportunities found matching this category.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        grid.innerHTML = '';
+        filtered.forEach(o => {
+            const deadlineDate = new Date(o.deadline);
+            const formattedDeadline = deadlineDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+            
+            // Check if due tomorrow (within 24-36 hours) and not completed
+            const isDueTomorrow = activeTab !== 'missed' && o.user_status !== 'Applied' && (deadlineDate.getTime() - Date.now()) > 0 && (deadlineDate.getTime() - Date.now()) <= 86400000 * 1.5;
+            
+            // Stars html
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= o.score) {
+                    starsHtml += `<i data-lucide="star" style="fill: #fbbf24;"></i>`;
+                } else {
+                    starsHtml += `<i data-lucide="star" style="color: var(--text-muted);"></i>`;
+                }
+            }
+            
+            // Category class mapper
+            let catClass = 'cat-default';
+            const catLower = o.category.toLowerCase();
+            if (catLower.includes('hackathon')) catClass = 'cat-hackathon';
+            else if (catLower.includes('internship')) catClass = 'cat-internship';
+            else if (catLower.includes('workshop')) catClass = 'cat-workshop';
+            else if (catLower.includes('webinar')) catClass = 'cat-webinar';
+            else if (catLower.includes('scholarship')) catClass = 'cat-scholarship';
+            else if (catLower.includes('competition')) catClass = 'cat-competition';
+
+            // Skills pills
+            let skillsHtml = '';
+            if (o.skills) {
+                o.skills.split(',').forEach(sk => {
+                    if (sk.trim()) {
+                        skillsHtml += `<span class="opp-skill-pill">${escapeHTML(sk.trim())}</span>`;
+                    }
+                });
+            }
+
+            const card = document.createElement('div');
+            card.className = 'opp-card glass-panel';
+            
+            let badgeHtml = '';
+            if (o.user_status === 'Applied') {
+                badgeHtml = `<span class="goal-badge badge-completed">Applied</span>`;
+            } else if (o.user_status === 'Saved') {
+                badgeHtml = `<span class="goal-badge badge-active">Saved</span>`;
+            }
+
+            card.innerHTML = `
+                ${isDueTomorrow ? `
+                <div class="closing-soon-banner">
+                    <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                    <span>⚠ Opportunity Closing Soon</span>
+                </div>` : ''}
+                
+                <div class="opp-card-header">
+                    <div class="opp-title-block">
+                        <span class="opp-category-badge ${catClass}">${o.category}</span>
+                        <span class="opp-title" style="margin-top: 6px;">${escapeHTML(o.name)}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                        <div class="opp-stars">${starsHtml}</div>
+                        ${badgeHtml}
+                    </div>
+                </div>
+
+                <div class="opp-meta-grid">
+                    <div class="opp-meta-item">
+                        <i data-lucide="calendar"></i>
+                        <span>Deadline: ${formattedDeadline}</span>
+                    </div>
+                    <div class="opp-meta-item">
+                        <i data-lucide="users"></i>
+                        <span>Eligibility: ${escapeHTML(o.eligibility || 'Open to all')}</span>
+                    </div>
+                </div>
+
+                ${skillsHtml ? `<div class="opp-skills-list">${skillsHtml}</div>` : ''}
+                
+                ${o.details ? `<div class="opp-details">${escapeHTML(o.details)}</div>` : ''}
+
+                ${o.match_reason && o.match_reason.length > 0 ? `
+                <div class="opp-match-pill">
+                    <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+                    <span>${o.match_reason.join(', ')}</span>
+                </div>` : ''}
+
+                <div class="opp-actions-row">
+                    <div style="display: flex; gap: 8px;">
+                        ${activeTab !== 'missed' && o.user_status !== 'Applied' ? `
+                            <button class="btn btn-secondary btn-sm" onclick="triggerAction(${o.id}, 'Saved')" ${o.user_status === 'Saved' ? 'disabled' : ''}>
+                                <i data-lucide="bookmark"></i> ${o.user_status === 'Saved' ? 'Saved' : 'Save'}
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="triggerAction(${o.id}, 'Applied')">
+                                <i data-lucide="check-circle-2"></i> Mark Applied
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    <a href="${o.link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                        Register Now <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                    </a>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        lucide.createIcons();
+    }
+
+    async function triggerAction(oppId, status) {
+        try {
+            const res = await fetch(`/api/opportunities/${oppId}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) {
+                showToast(status === 'Saved' ? "Opportunity saved!" : "Marked as applied!", "success");
+                loadTabContent();
+            } else {
+                showToast("Failed to update status", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Connection error", "error");
+        }
+    }
+
+    function setupFilters() {
+        document.getElementById('oppSearch').addEventListener('input', renderOpportunities);
+        document.getElementById('oppCategoryFilter').addEventListener('change', renderOpportunities);
+    }
+
+    function setupSyncBtn() {
+        const btn = document.getElementById('syncFeedsBtn');
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="refresh-cw" class="loading-spin"></i> Syncing...`;
+            lucide.createIcons();
+            
+            try {
+                const res = await fetch('/api/opportunities/trigger-crawl', { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(data.message, "success");
+                    loadTabContent();
+                } else {
+                    showToast("Sync aggregation failed", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Connection error", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="refresh-cw"></i> Sync Feeds & Re-Aggregate`;
+                lucide.createIcons();
+            }
+        });
+    }
+</script>
+{% endblock %}

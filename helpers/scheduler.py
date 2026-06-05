@@ -3,8 +3,9 @@ import threading
 from datetime import datetime, timedelta
 from database import db
 from models.task import Task
-from models.reminder import Reminder
+from models.reminder import Reminder, NotificationLog
 from models.user import User
+from models.user_opportunity import UserOpportunity
 from helpers.notifications import send_email, send_whatsapp
 
 def recreate_reminders_for_task(task):
@@ -137,6 +138,45 @@ def check_reminders(app):
             reminder.sent_at = datetime.utcnow()
             
         db.session.commit()
+
+        # Opportunity reminders
+        # Find saved opportunities that are active and closing soon
+        # Send alerts at 3 days before and 1 day before
+        saved_opps = UserOpportunity.query.filter_by(status='Saved').all()
+        for so in saved_opps:
+            opp = so.opportunity
+            if not opp or opp.deadline < now:
+                continue
+                
+            delta = opp.deadline - now
+            user = so.user
+            if not user:
+                continue
+                
+            # Check 3 days alert
+            if 2 <= delta.days < 3:
+                # Check if already sent
+                sent_log = NotificationLog.query.filter(
+                    NotificationLog.user_id == user.id,
+                    NotificationLog.subject.like(f"%3 days%"),
+                    NotificationLog.message.like(f"%{opp.name}%")
+                ).first()
+                if not sent_log:
+                    subject = f"⚠️ Opportunity Reminder: '{opp.name}' is due in 3 days!"
+                    body = f"Hi {user.name}, the saved opportunity '{opp.name}' ({opp.category}) closes in 3 days on {opp.deadline.strftime('%Y-%m-%d %I:%M %p')}. Register now!"
+                    send_email(user, subject, body, app)
+                    
+            elif 0 <= delta.days < 1:
+                # Check if already sent
+                sent_log = NotificationLog.query.filter(
+                    NotificationLog.user_id == user.id,
+                    NotificationLog.subject.like(f"%Tomorrow%"),
+                    NotificationLog.message.like(f"%{opp.name}%")
+                ).first()
+                if not sent_log:
+                    subject = f"⚠️ Opportunity Closing Soon: '{opp.name}' is due Tomorrow!"
+                    body = f"Hi {user.name}, the saved opportunity '{opp.name}' ({opp.category}) closes tomorrow on {opp.deadline.strftime('%Y-%m-%d %I:%M %p')}. Register immediately!"
+                    send_email(user, subject, body, app)
 
 def run_scheduler(app):
     """Loop runner for background reminders."""

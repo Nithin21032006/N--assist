@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+
+{% block title %}Academic Tracker - N-Assist{% endblock %}
+{% block page_title %}Academic & Extracurricular Tracker{% endblock %}
+
+{% block head %}
+<style>
+    .tracker-top-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .tracker-stat-card {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        transition: transform var(--transition-fast), border-color var(--transition-fast);
+    }
+    .tracker-stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .tracker-stat-card .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+    
+    .tracker-stat-card .stat-icon i {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .tracker-stat-card .stat-count {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    .tracker-stat-card .stat-name {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .tracker-split {
+        display: flex;
+        gap: 24px;
+    }
+    
+    .tracker-list-panel {
+        flex: 1.6;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .tracker-form-panel {
+        flex: 1;
+        padding: 24px;
+        height: fit-content;
+        position: sticky;
+        top: 24px;
+    }
+    
+    .filter-bar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .filter-bar input {
+        flex: 1;
+        padding: 10px 16px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+    
+    .filter-bar select {
+        width: 160px;
+        padding: 10px 16px;
+        font-size: 14px;
+        border-radius: 12px;
+        cursor: pointer;
+    }
+    
+    .achievements-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-height: 550px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+    
+    .achievements-timeline::-webkit-scrollbar {
+        width: 6px;
+    }
+    .achievements-timeline::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .achievements-timeline::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+    }
+    .achievements-timeline::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .achievement-item {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        transition: transform var(--transition-fast), background var(--transition-smooth);
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .achievement-item:hover {
+        transform: translateX(4px);
+        background: rgba(255, 255, 255, 0.02);
+    }
+    
+    body.light-theme .achievement-item:hover {
+        background: rgba(0, 0, 0, 0.01);
+    }
+    
+    .achievement-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .achievement-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .achievement-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .achievement-badge {
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-workshop { background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2); }
+    .badge-certification { background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .badge-hackathon { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge-seminar { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .badge-event { background: rgba(6, 182, 212, 0.12); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.2); }
+    
+    .achievement-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    .achievement-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .achievement-meta i {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .achievement-description {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-top: 4px;
+    }
+    
+    .achievement-delete-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+        transition: var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .achievement-delete-btn:hover {
+        color: var(--danger-color);
+        background: rgba(244, 63, 94, 0.08);
+    }
+    .achievement-delete-btn i {
+        width: 18px;
+        height: 18px;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @media (max-width: 1024px) {
+        .tracker-top-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .tracker-split {
+            flex-direction: column-reverse;
+        }
+        .tracker-form-panel {
+            position: relative;
+            top: 0;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .tracker-top-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-bar select {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stat Counters Grid -->
+<div class="tracker-top-grid">
+    <div class="tracker-stat-card glass-panel">
+        <div class="stat-icon purple-gradient">
+            <i data-lucide="award"></i>
+        </div>
+        <span class="stat-count" id="countWorkshops">0</span>
+        <span class="stat-name">Workshops</span>
+    </div>
+    
+    <div class="tracker-stat-card glass-panel">
+        <div class="stat-icon blue-gradient">
+            <i data-lucide="shield-check"></i>
+        </div>
+        <span class="stat-count" id="countCertifications">0</span>
+        <span class="stat-name">Certifications</span>
+    </div>
+    
+    <div class="tracker-stat-card glass-panel">
+        <div class="stat-icon emerald-gradient">
+            <i data-lucide="code-2"></i>
+        </div>
+        <span class="stat-count" id="countHackathons">0</span>
+        <span class="stat-name">Hackathons</span>
+    </div>
+    
+    <div class="tracker-stat-card glass-panel">
+        <div class="stat-icon amber-gradient">
+            <i data-lucide="presentation"></i>
+        </div>
+        <span class="stat-count" id="countSeminars">0</span>
+        <span class="stat-name">Seminars</span>
+    </div>
+    
+    <div class="tracker-stat-card glass-panel">
+        <div class="stat-icon cyan-gradient">
+            <i data-lucide="calendar-heart"></i>
+        </div>
+        <span class="stat-count" id="countEvents">0</span>
+        <span class="stat-name">Technical Events</span>
+    </div>
+</div>
+
+<!-- Main Split Layout -->
+<div class="tracker-split">
+    <!-- Achievements List Panel -->
+    <div class="tracker-list-panel glass-panel">
+        <div class="panel-header">
+            <h3><i data-lucide="scroll" class="purple-icon"></i> Achievement Portfolio</h3>
+            <span class="form-help" id="totalAchievementsText">0 Achievements Logged</span>
+        </div>
+        
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <input type="text" id="achievementSearch" placeholder="Search achievements..." autocomplete="off">
+            <select id="achievementFilterCategory">
+                <option value="">All Categories</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Certification">Certification</option>
+                <option value="Hackathon">Hackathon</option>
+                <option value="Seminar">Seminar</option>
+                <option value="Technical Event">Technical Event</option>
+            </select>
+        </div>
+        
+        <!-- Timeline List -->
+        <div class="achievements-timeline" id="achievementsTimeline">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Log Form Panel -->
+    <div class="tracker-form-panel glass-panel">
+        <div class="panel-header">
+            <h3><i data-lucide="plus-circle" class="purple-icon"></i> Log New Achievement</h3>
+        </div>
+        <form id="achievementForm" style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label><i data-lucide="text"></i> Title</label>
+                <input type="text" id="achTitle" placeholder="e.g. Completed Advanced Python Workshop" required>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label><i data-lucide="tag"></i> Category</label>
+                <select id="achCategory" required>
+                    <option value="" disabled selected>Select Category...</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Certification">Certification</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Seminar">Seminar</option>
+                    <option value="Technical Event">Technical Event</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label><i data-lucide="calendar"></i> Date Achieved</label>
+                <input type="date" id="achDate" required>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label><i data-lucide="align-left"></i> Description / Details (Optional)</label>
+                <textarea id="achDescription" rows="4" placeholder="Briefly describe what you did or earned..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%; margin-top: 10px;">
+                <i data-lucide="plus"></i> Add to Portfolio
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let achievementsData = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadAchievements();
+        setupForm();
+        setupFilters();
+        
+        // Default the date input to today
+        document.getElementById('achDate').valueAsDate = new Date();
+    });
+
+    async function loadAchievements() {
+        try {
+            const res = await fetch('/api/academic-tracker');
+            if (!res.ok) throw new Error("Could not fetch achievements");
+            
+            achievementsData = await res.json();
+            renderAchievements();
+            updateStats();
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to load achievements", "error");
+        }
+    }
+
+    function renderAchievements() {
+        const container = document.getElementById('achievementsTimeline');
+        const query = document.getElementById('achievementSearch').value.toLowerCase();
+        const catFilter = document.getElementById('achievementFilterCategory').value;
+        
+        const filtered = achievementsData.filter(a => {
+            const matchesQuery = a.title.toLowerCase().includes(query) || (a.description && a.description.toLowerCase().includes(query));
+            const matchesCat = !catFilter || a.category === catFilter;
+            return matchesQuery && matchesCat;
+        });
+
+        document.getElementById('totalAchievementsText').innerText = `${filtered.length} Achievements Logged`;
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                    <i data-lucide="award" style="width: 48px; height: 48px; margin-bottom: 12px; color: var(--text-muted);"></i>
+                    <p>No achievements logged yet. Fill out the form to build your portfolio!</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        container.innerHTML = '';
+        filtered.forEach(a => {
+            const dateObj = new Date(a.date);
+            const formattedDate = dateObj.toLocaleDateString(undefined, {year: 'numeric', month: 'long', day: 'numeric'});
+            
+            let badgeClass = 'badge-event';
+            if (a.category === 'Workshop') badgeClass = 'badge-workshop';
+            else if (a.category === 'Certification') badgeClass = 'badge-certification';
+            else if (a.category === 'Hackathon') badgeClass = 'badge-hackathon';
+            else if (a.category === 'Seminar') badgeClass = 'badge-seminar';
+            
+            const card = document.createElement('div');
+            card.className = 'achievement-item glass-panel';
+            card.innerHTML = `
+                <div class="achievement-info">
+                    <div class="achievement-header">
+                        <span class="achievement-title">${escapeHTML(a.title)}</span>
+                        <span class="achievement-badge ${badgeClass}">${a.category}</span>
+                    </div>
+                    <div class="achievement-meta">
+                        <span><i data-lucide="calendar"></i> ${formattedDate}</span>
+                    </div>
+                    ${a.description ? `<p class="achievement-description">${escapeHTML(a.description)}</p>` : ''}
+                </div>
+                <button class="achievement-delete-btn" onclick="deleteAchievement(${a.id})" title="Delete Achievement">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            `;
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    }
+
+    async function deleteAchievement(id) {
+        if (!confirm("Are you sure you want to delete this achievement?")) return;
+        
+        try {
+            const res = await fetch(`/api/academic-tracker/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast("Achievement deleted successfully!", "success");
+                loadAchievements();
+            } else {
+                showToast("Failed to delete achievement", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Connection error", "error");
+        }
+    }
+
+    function updateStats() {
+        const stats = {
+            'Workshop': 0,
+            'Certification': 0,
+            'Hackathon': 0,
+            'Seminar': 0,
+            'Technical Event': 0
+        };
+
+        achievementsData.forEach(a => {
+            if (a.category in stats) {
+                stats[a.category]++;
+            }
+        });
+
+        document.getElementById('countWorkshops').innerText = stats['Workshop'];
+        document.getElementById('countCertifications').innerText = stats['Certification'];
+        document.getElementById('countHackathons').innerText = stats['Hackathon'];
+        document.getElementById('countSeminars').innerText = stats['Seminar'];
+        document.getElementById('countEvents').innerText = stats['Technical Event'];
+    }
+
+    function setupForm() {
+        const form = document.getElementById('achievementForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('achTitle').value.strip ? document.getElementById('achTitle').value.strip() : document.getElementById('achTitle').value.trim();
+            const category = document.getElementById('achCategory').value;
+            const date = document.getElementById('achDate').value;
+            const description = document.getElementById('achDescription').value.strip ? document.getElementById('achDescription').value.strip() : document.getElementById('achDescription').value.trim();
+            
+            try {
+                const res = await fetch('/api/academic-tracker', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, category, date, description })
+                });
+
+                if (res.ok) {
+                    showToast("Achievement logged successfully!", "success");
+                    form.reset();
+                    document.getElementById('achDate').valueAsDate = new Date();
+                    loadAchievements();
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || "Failed to log achievement", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Connection error", "error");
+            }
+        });
+    }
+
+    function setupFilters() {
+        document.getElementById('achievementSearch').addEventListener('input', renderAchievements);
+        document.getElementById('achievementFilterCategory').addEventListener('change', renderAchievements);
+    }
+</script>
+{% endblock %}

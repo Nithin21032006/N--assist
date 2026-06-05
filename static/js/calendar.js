@@ -15,12 +15,12 @@ async function initCalendar() {
 
 async function loadCalendarTasks() {
     try {
-        const res = await fetch('/api/tasks');
+        const res = await fetch('/api/calendar/events');
         calendarTasks = await res.json();
         renderCalendar();
     } catch (err) {
         console.error("Error loading calendar events:", err);
-        showToast("Failed to fetch calendar tasks.", "error");
+        showToast("Failed to fetch calendar events.", "error");
     }
 }
 
@@ -113,7 +113,7 @@ function renderCalendar() {
             let compCount = 0;
             
             dayTasks.forEach(t => {
-                if (t.status === "Completed") compCount++;
+                if (t.status === "Completed" || t.status === "Applied") compCount++;
                 else if (t.priority === "High") highCount++;
                 else if (t.priority === "Medium") medCount++;
                 else if (t.priority === "Low") lowCount++;
@@ -200,15 +200,16 @@ function showDayDetails(date, tasks) {
     
     container.innerHTML = "";
     tasks.forEach(task => {
-        const isCompleted = task.status === "Completed";
+        const isCompleted = task.status === "Completed" || task.status === "Applied";
         const isOverdue = task.is_overdue;
+        const isOpportunity = task.type === "opportunity";
         
-        let borderClass = `border-${task.priority.toLowerCase()}`;
-        let statusText = "Pending";
+        let borderClass = isOpportunity ? 'border-gradient-purple' : `border-${task.priority.toLowerCase()}`;
+        let statusText = task.status;
         
         if (isCompleted) {
             borderClass = 'border-completed';
-            statusText = "Completed";
+            statusText = task.status === "Applied" ? "Applied" : "Completed";
         } else if (isOverdue) {
             borderClass = 'border-overdue';
             statusText = "Overdue";
@@ -220,12 +221,21 @@ function showDayDetails(date, tasks) {
         const dateObj = new Date(task.deadline);
         const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
         
-        item.innerHTML = `
-            <h5 class="${isCompleted ? 'line-through' : ''}">${escapeHTML(task.title)}</h5>
-            <p><strong>Category:</strong> ${task.category}</p>
-            <p><strong>Time:</strong> ${timeStr}</p>
-            <p><strong>Priority:</strong> ${task.priority} | <strong>Status:</strong> ${statusText}</p>
-        `;
+        if (isOpportunity) {
+            item.innerHTML = `
+                <h5 class="${isCompleted ? 'line-through' : ''}">${escapeHTML(task.title)}</h5>
+                <p><strong>Category:</strong> ${task.category} (Opportunity)</p>
+                <p><strong>Time:</strong> ${timeStr}</p>
+                <p><strong>Status:</strong> ${statusText} | <a href="${task.link}" target="_blank" style="color: #00b0ff; font-weight: 700; text-decoration: none;">Register <i data-lucide="external-link" style="width: 12px; height: 12px; display: inline;"></i></a></p>
+            `;
+        } else {
+            item.innerHTML = `
+                <h5 class="${isCompleted ? 'line-through' : ''}">${escapeHTML(task.title)}</h5>
+                <p><strong>Category:</strong> ${task.category}</p>
+                <p><strong>Time:</strong> ${timeStr}</p>
+                <p><strong>Priority:</strong> ${task.priority} | <strong>Status:</strong> ${statusText}</p>
+            `;
+        }
         container.appendChild(item);
     });
     lucide.createIcons();

@@ -35,9 +35,9 @@ function getChartThemeColors() {
     return {
         text: isLight ? "#475569" : "#94a3b8",
         grid: isLight ? "rgba(15, 23, 42, 0.05)" : "rgba(255, 255, 255, 0.05)",
-        panelBg: isLight ? "#ffffff" : "#0d1426",
-        purpleGradient: ['#a855f7', '#6366f1'],
-        emeraldGradient: ['#10b981', '#059669'],
+        panelBg: isLight ? "#ffffff" : "#07080a",
+        purpleGradient: ['#00ffd0', '#00b0ff'],
+        emeraldGradient: ['#00ff9f', '#00c853'],
     };
 }
 
@@ -93,8 +93,8 @@ function renderTimelineChart(monthlyData) {
     
     // Create background gradient for line area
     const areaGlow = ctx.createLinearGradient(0, 0, 0, 300);
-    areaGlow.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
-    areaGlow.addColorStop(1, 'rgba(99, 102, 241, 0)');
+    areaGlow.addColorStop(0, 'rgba(0, 242, 254, 0.15)');
+    areaGlow.addColorStop(1, 'rgba(0, 114, 255, 0)');
 
     charts.timeline = new Chart(ctx, {
         type: 'line',
@@ -103,13 +103,13 @@ function renderTimelineChart(monthlyData) {
             datasets: [{
                 label: 'Tasks Completed',
                 data: monthlyData,
-                borderColor: '#a855f7',
+                borderColor: '#00f2fe',
                 borderWidth: 3,
                 backgroundColor: areaGlow,
                 fill: true,
                 tension: 0.4,
-                pointBackgroundColor: '#6366f1',
-                pointBorderColor: '#ffffff',
+                pointBackgroundColor: '#00ffd0',
+                pointBorderColor: '#07080a',
                 pointHoverRadius: 6,
                 pointRadius: 4
             }]
@@ -149,11 +149,11 @@ function renderCategoryChart(categoryMap) {
             datasets: [{
                 label: 'Task Volume',
                 data: dataValues,
-                backgroundColor: 'rgba(99, 102, 241, 0.08)',
-                borderColor: '#6366f1',
+                backgroundColor: 'rgba(0, 242, 254, 0.08)',
+                borderColor: '#00b0ff',
                 borderWidth: 2,
-                pointBackgroundColor: '#a855f7',
-                pointBorderColor: '#ffffff',
+                pointBackgroundColor: '#00ffd0',
+                pointBorderColor: '#07080a',
                 pointRadius: 3
             }]
         },
@@ -190,8 +190,8 @@ function renderWeeklyChart(weeklyData) {
     
     // Custom gradient for bars
     const barGradient = ctx.createLinearGradient(0, 0, 0, 300);
-    barGradient.addColorStop(0, '#6366f1');
-    barGradient.addColorStop(1, '#a855f7');
+    barGradient.addColorStop(0, '#4facfe');
+    barGradient.addColorStop(1, '#00ffd0');
 
     charts.weekly = new Chart(ctx, {
         type: 'bar',
@@ -201,7 +201,7 @@ function renderWeeklyChart(weeklyData) {
                 label: 'Deadlines Handled',
                 data: weeklyData,
                 backgroundColor: barGradient,
-                borderRadius: 6,
+                borderRadius: 4,
                 maxBarThickness: 32
             }]
         },

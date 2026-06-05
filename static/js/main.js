@@ -163,6 +163,37 @@ function initAIChatDrawer() {
         }
     });
 
+    // Sidebar AI Copilot nav item click
+    const sidebarBtn = document.getElementById("aiSidebarNav");
+    if (sidebarBtn) {
+        sidebarBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            bubble.click();
+        });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+        const active = document.activeElement;
+        const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT" || active.contentEditable === "true");
+        
+        // '/' shortcut to open or focus
+        if (e.key === "/" && !isTyping) {
+            e.preventDefault();
+            if (!container.classList.contains("active")) {
+                bubble.click();
+            } else {
+                input.focus();
+            }
+        }
+        
+        // Alt+A shortcut to toggle
+        if (e.altKey && e.key.toLowerCase() === "a") {
+            e.preventDefault();
+            bubble.click();
+        }
+    });
+
     // Close when clicking close widget inside header
     if (closeBtn) {
         closeBtn.addEventListener("click", (e) => {

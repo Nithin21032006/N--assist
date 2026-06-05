@@ -11,10 +11,16 @@ class User(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    branch = db.Column(db.String(100), nullable=True)
+    year = db.Column(db.String(50), nullable=True)
+    skills = db.Column(db.Text, nullable=True)
     
     # Relationships
     tasks = db.relationship('Task', back_populates='user', cascade="all, delete-orphan")
     notifications = db.relationship('NotificationLog', back_populates='user', cascade="all, delete-orphan")
+    achievements = db.relationship('AcademicTracker', back_populates='user', cascade="all, delete-orphan")
+    goals = db.relationship('Goal', back_populates='user', cascade="all, delete-orphan")
+    user_opportunities = db.relationship('UserOpportunity', back_populates='user', cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
